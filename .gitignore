@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment (contains secrets)
+.env
+.env.local
+
+# Database
+*.db
+*.db-wal
+*.db-shm
+
+# Exports
+exports/
+export_test.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/

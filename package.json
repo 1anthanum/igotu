@@ -1,0 +1,22 @@
+{
+  "name": "igotu",
+  "version": "1.0.0",
+  "description": "IGOTU - I Got You | 一站式抑郁应对平台",
+  "private": true,
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "dev": "concurrently -n API,WEB -c blue,green \"cd backend && npm run dev\" \"cd frontend && npm run dev\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd backend && npm run build && cd ../frontend && npm run build",
+    "start": "npm run install:all && npm run dev",
+    "seed": "cd backend && npx ts-node src/scripts/seed.ts",
+    "test": "cd backend && npx vitest run",
+    "test:watch": "cd backend && npx vitest",
+    "export": "cd backend && npx ts-node src/scripts/export.ts",
+    "reset": "cd backend && rm -f igotu.db && echo '🗑️ 数据库已重置，重启后自动重建'"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
