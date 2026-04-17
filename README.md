@@ -1,6 +1,6 @@
 ---
 title: IGOTU
-emoji: 🌿
+emoji: "\U0001F33F"
 colorFrom: green
 colorTo: blue
 sdk: docker
@@ -8,134 +8,213 @@ app_port: 7860
 pinned: false
 ---
 
-# 🌿 IGOTU — I Got You | 一站式抑郁应对平台
+# IGOTU — I Got You
 
-为抑郁症患者设计的综合应对平台。记录微成就、AI 对话陪伴、情绪追踪、认知行为疗法工具、呼吸引导——你需要的一切都在这里。
+A comprehensive depression coping platform designed with empathy. Track micro-achievements, chat with an AI companion, monitor mood trends, and access CBT-based therapeutic tools — all in one place.
 
-## 设计理念
+> "Like a plant, grow slowly."
 
-- **超低门槛**：一键操作，低能量时也能使用
-- **永不内疚**：没有"打卡中断"提示，只有正向回顾
-- **专业温暖**：基于 CBT 和临床工具，但语言始终温柔
-- **隐私优先**：数据只属于你
+## Features
 
-## 核心功能
+| Module | Description |
+|--------|-------------|
+| **Home** | Log micro-achievements with one tap, heatmap calendar, daily encouragement |
+| **Chat** | AI companion powered by Claude API (with offline fallback) |
+| **Toolbox** | PHQ-9 screening, guided breathing, grounding exercises, cognitive restructuring |
+| **Mood** | Emoji-based mood tracking with trend visualization |
+| **Analytics** | Weekly/monthly summaries, streak detection, pattern insights |
 
-| 模块 | 功能 | 来源 |
-|------|------|------|
-| 首页 | 微成就记录 + 热力图 + 鼓励语 | MicroWins |
-| 对话 | AI 陪伴对话（Claude API） | Inner Voice |
-| 工具箱 | PHQ-9 / 呼吸引导 / 扎根练习 / 认知重构 | Inner Voice |
-| 情绪 | 情绪记录 + 趋势图 | 合并 |
-| 分析 | 综合数据分析 + 模式洞察 | MicroWins |
+## Design Principles
 
-## 技术栈
+- **Ultra-low barrier** — One-tap interactions, usable even on low-energy days
+- **Never guilt-trip** — No "streak broken" messages, only positive reinforcement
+- **Clinically informed** — Based on CBT and validated tools (PHQ-9), wrapped in warm language
+- **Privacy first** — SQLite file database, your data stays with you
 
-| 层 | 技术 |
-|---|---|
-| 前端 | Vue 3 + Vite + TypeScript + Tailwind CSS + Pinia + Chart.js |
-| 后端 | Node.js + Express + TypeScript |
-| AI | Anthropic Claude API（通过后端代理） |
-| 数据库 | SQLite（文件数据库，零配置） |
-| 部署 | Docker / Hugging Face Spaces |
+## Tech Stack
 
-## 快速启动
+| Layer | Technology |
+|-------|------------|
+| Frontend | Vue 3 + TypeScript + Vite + Tailwind CSS + Pinia + Chart.js |
+| Backend | Node.js + Express + TypeScript + Zod validation |
+| AI | Anthropic Claude API (server-side proxy) |
+| Database | SQLite via better-sqlite3 (zero-config) |
+| Deployment | Docker / Hugging Face Spaces |
 
-### 方式一：Hugging Face Spaces
+## Quick Start
 
-1. Fork 此 Space
-2. 在 Space Settings → Secrets 中设置环境变量：
-   - `JWT_SECRET`：自定义随机字符串
-   - `ANTHROPIC_API_KEY`：（可选）启用 AI 对话功能
-3. Space 会自动构建部署
+### Prerequisites
 
-> SQLite 数据库存储在 HF Spaces 的 `/data` 持久卷中，重启不会丢失数据。
+- Node.js 20+
 
-### 方式二：Docker（本地）
+### Option 1: Local Development
+
+```bash
+# Clone and install
+git clone https://github.com/Futaosen/igotu.git
+cd igotu
+npm run install:all
+
+# Configure backend
+cp .env.example backend/.env
+# Edit backend/.env — set JWT_SECRET, optionally add ANTHROPIC_API_KEY
+
+# Start both servers
+npm run dev
+```
+
+- Frontend: http://localhost:5173
+- API: http://localhost:3000
+
+> No database setup needed — SQLite creates `igotu.db` automatically on first run.
+
+### Option 2: Docker
 
 ```bash
 cp .env.example .env
-# 编辑 .env：设置 JWT_SECRET，可选添加 ANTHROPIC_API_KEY
+# Edit .env with your secrets
 docker-compose up -d
 ```
 
-访问 http://localhost
+Access at http://localhost
 
-### 方式三：本地开发
+### Option 3: Hugging Face Spaces
 
-**前置条件**：Node.js 20+
+1. Fork this repo as an HF Space (SDK: Docker)
+2. Add secrets in Space Settings:
+   - `JWT_SECRET` — random string (required)
+   - `ANTHROPIC_API_KEY` — enables AI chat (optional)
+3. The Space builds and deploys automatically
 
-```bash
-# 1. 启动后端
-cd backend
-npm install
-cp .env.example .env   # 编辑配置
-npm run dev
+> Data persists in HF's `/data` volume across restarts.
 
-# 2. 启动前端（新终端）
-cd frontend
-npm install
-npm run dev
-```
+## API Reference
 
-访问 http://localhost:5173
+### Authentication
 
-> 无需安装数据库！SQLite 会在首次启动时自动创建 `igotu.db` 文件。
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/auth/register` | Create account |
+| POST | `/api/auth/login` | Login (returns JWT) |
+| POST | `/api/auth/refresh` | Refresh access token |
 
-## API 端点
+### Achievements
 
-### 原有（微成就）
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | /api/auth/register | 注册 |
-| POST | /api/auth/login | 登录 |
-| POST | /api/achievements | 记录成就 |
-| GET | /api/achievements/today | 今日成就 |
-| GET | /api/achievements/calendar | 热力图数据 |
-| GET | /api/analytics/weekly | 周报 |
-| GET | /api/encouragement/current | 鼓励语 |
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/achievements` | Log an achievement |
+| GET | `/api/achievements` | List achievements (paginated) |
+| GET | `/api/achievements/today` | Today's achievements |
+| GET | `/api/achievements/calendar` | Heatmap calendar data |
 
-### 新增（IGOTU 模块）
-| 方法 | 路径 | 说明 |
-|------|------|------|
-| POST | /api/chat/sessions | 创建对话 |
-| POST | /api/chat/sessions/:id/messages | 发送消息 |
-| POST | /api/mood | 记录情绪 |
-| GET | /api/mood/trend | 情绪趋势 |
-| POST | /api/phq9 | 提交 PHQ-9 |
-| GET | /api/phq9 | PHQ-9 历史 |
-| POST | /api/exercises | 记录练习 |
-| POST | /api/cognitive | 保存认知重构 |
+### Chat (AI Companion)
 
-## 项目结构
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/chat/sessions` | Create conversation |
+| GET | `/api/chat/sessions` | List sessions |
+| POST | `/api/chat/sessions/:id/messages` | Send message |
+| GET | `/api/chat/sessions/:id/messages` | Get message history |
+| DELETE | `/api/chat/sessions/:id` | Delete session |
+
+### Mood Tracking
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/mood` | Log mood entry |
+| GET | `/api/mood` | Mood history (paginated) |
+| GET | `/api/mood/today` | Today's entries |
+| GET | `/api/mood/trend` | Trend data (default 30 days) |
+
+### Toolbox
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/phq9` | Submit PHQ-9 assessment |
+| GET | `/api/phq9` | Assessment history |
+| GET | `/api/phq9/latest` | Latest assessment |
+| POST | `/api/exercises` | Log breathing/grounding exercise |
+| GET | `/api/exercises/stats` | Exercise statistics |
+| POST | `/api/cognitive` | Save cognitive restructuring record |
+| GET | `/api/cognitive` | Cognitive history |
+
+### Analytics & Data
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/analytics/weekly` | Weekly summary |
+| GET | `/api/analytics/monthly` | Monthly summary |
+| GET | `/api/analytics/patterns` | Pattern insights |
+| GET | `/api/encouragement/current` | Daily encouragement |
+| GET | `/api/user/export` | Export all user data (JSON) |
+| POST | `/api/user/import` | Import user data |
+
+## Project Structure
 
 ```
 igotu/
 ├── backend/
-│   ├── src/
-│   │   ├── config/       # 数据库、JWT、环境变量
-│   │   ├── middleware/    # 认证、错误处理
-│   │   ├── routes/        # API 路由
-│   │   ├── services/      # 业务逻辑
-│   │   ├── utils/         # 系统提示词、常量、日期工具
-│   │   └── migrations/    # SQL 迁移
-│   └── Dockerfile
+│   └── src/
+│       ├── config/          # Database, JWT, environment
+│       ├── middleware/       # Auth guard, validation, error handler
+│       ├── routes/           # Express route handlers
+│       ├── services/         # Business logic layer
+│       ├── migrations/       # SQL schema migrations
+│       ├── utils/            # Constants, date helpers, AI system prompt
+│       ├── scripts/          # Seed data, CLI export
+│       └── tests/            # Integration tests (Vitest)
 │
 ├── frontend/
-│   ├── src/
-│   │   ├── views/         # 页面
-│   │   ├── components/    # UI 组件
-│   │   ├── stores/        # Pinia 状态管理
-│   │   ├── api/           # API 调用层
-│   │   └── router/        # Vue Router
-│   └── Dockerfile
+│   └── src/
+│       ├── views/            # Page components
+│       ├── components/       # Reusable UI components
+│       ├── stores/           # Pinia state management
+│       ├── api/              # Axios API client layer
+│       ├── composables/      # Vue composables (mood theme)
+│       ├── router/           # Vue Router config
+│       ├── types/            # TypeScript type definitions
+│       └── styles/           # Tailwind CSS entry
 │
-├── Dockerfile             # 统一部署 Dockerfile（HF Spaces）
-└── docker-compose.yml     # 本地 Docker 部署
+├── Dockerfile                # Unified build (Hugging Face Spaces)
+├── docker-compose.yml        # Local multi-container setup
+└── start.sh / start.bat      # One-click dev launcher
 ```
 
-## 安全提醒
+## Environment Variables
 
-- AI 对话功能不替代专业医疗
-- PHQ-9 是筛查工具，不是诊断
-- 如需紧急帮助：全国心理援助热线 400-161-9995
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `DB_PATH` | No | `./igotu.db` | SQLite database file path |
+| `JWT_SECRET` | Production | dev default | Token signing secret |
+| `ENCRYPTION_KEY` | Production | dev default | Data encryption key |
+| `PORT` | No | `3000` | API server port |
+| `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin |
+| `ANTHROPIC_API_KEY` | No | — | Enables AI chat (empty = offline mode) |
+| `ANTHROPIC_MODEL` | No | `claude-sonnet-4-20250514` | Claude model ID |
+| `ANTHROPIC_MAX_TOKENS` | No | `4096` | Max tokens per AI response |
+
+## Available Scripts
+
+```bash
+npm run dev              # Start frontend + backend concurrently
+npm run dev:backend      # Start backend only
+npm run dev:frontend     # Start frontend only
+npm run build            # Build both for production
+npm run install:all      # Install all dependencies
+npm run seed             # Generate test data
+npm run test             # Run backend integration tests
+npm run export           # CLI data export (JSON/CSV)
+npm run reset            # Delete database (auto-rebuilds on restart)
+```
+
+## Important Notice
+
+- This app is a **self-help tool**, not a substitute for professional medical care
+- PHQ-9 is a screening instrument, not a clinical diagnosis
+- If you need immediate help:
+  - **US**: National Crisis Hotline **988**
+  - **China**: Mental Health Hotline **400-161-9995**
+
+## License
+
+MIT
