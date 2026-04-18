@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IGOTU — 抑郁患者 UX 原型</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600&display=swap');
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: 'Noto Sans SC', sans-serif;
+    background: #0a0a0a;
+    color: #d0e8dc;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px;
+  }
+
+  h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 8px; }
+  h2 { font-size: 1.1rem; font-weight: 500; color: #6aa88e; margin-bottom: 16px; }
+
+  /* ── Controls ── */
+  .controls {
+    position: sticky; top: 0; z-index: 100;
+    background: rgba(10,10,10,0.95);
+    backdrop-filter: blur(12px);
+    padding: 16px 24px;
+    border-radius: 16px;
+    border: 1px solid rgba(100,220,180,0.1);
+    margin-bottom: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    max-width: 800px;
+    width: 100%;
+  }
+  .controls label {
+    font-size: 0.85rem;
+    color: #6aa88e;
+  }
+  .mood-slider {
+    -webkit-appearance: none;
+    width: 200px;
+    height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, #8b5cf6, #6366f1, #14b8a6, #10b981, #f59e0b);
+    outline: none;
+  }
+  .mood-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid #0a0a0a;
+    box-shadow: 0 0 12px var(--glow);
+    cursor: pointer;
+  }
+  .mood-display {
+    font-size: 1.5rem;
+    min-width: 40px;
+    text-align: center;
+  }
+  .mood-label {
+    font-size: 0.8rem;
+    color: var(--accent);
+    transition: color 0.5s;
+  }
+  .mode-badge {
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 500;
+    transition: all 0.5s;
+  }
+
+  /* ── Comparison grid ── */
+  .comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    max-width: 900px;
+    width: 100%;
+    margin-bottom: 40px;
+  }
+  .comparison > div {
+    min-width: 0;
+  }
+  .section-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #3a7a64;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(100,220,180,0.08);
+  }
+
+  /* ── Phone frame ── */
+  .phone {
+    width: 100%;
+    max-width: 375px;
+    min-height: 500px;
+    background: var(--bg);
+    border-radius: 24px;
+    border: 2px solid rgba(100,220,180,0.08);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.8s ease;
+    margin: 0 auto;
+  }
+  .phone.comfort-glow::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 180px;
+    background: radial-gradient(ellipse at bottom center, var(--comfort), transparent);
+    pointer-events: none;
+    z-index: 1;
+    transition: opacity 0.8s;
+  }
+  .phone-content {
+    padding: 16px;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* ── Nav ── */
+  .nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(6,15,13,0.88);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(100,220,180,0.06);
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 6px;
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 0.95rem;
+  }
+  .nav-links {
+    display: flex; gap: 2px;
+  }
+  .nav-link {
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    color: #3a7a64;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s;
+    white-space: nowrap;
+  }
+  .nav-link.active {
+    background: var(--nav-active);
+    color: var(--nav-text);
+  }
+  .nav-link .icon { display: none; font-size: 1rem; }
+  .low-energy .nav-link .text { display: none; }
+  .low-energy .nav-link .icon { display: block; }
+  .low-energy .nav-link.active .text { display: block; }
+  .low-energy .nav-link { padding: 8px 8px; }
+  .low-energy .nav-link.active { padding: 8px 12px; }
+
+  /* ── Card ── */
+  .card {
+    background: rgba(10,25,20,0.6);
+    border: 1px solid rgba(100,220,180,0.06);
+    border-radius: 16px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--light-line), transparent);
+  }
+
+  /* ── Greeting ── */
+  .greeting-box {
+    border-radius: 16px;
+    padding: 16px 20px;
+    background: linear-gradient(135deg, var(--grad-from), var(--grad-to));
+    margin-bottom: 12px;
+    transition: all 0.5s;
+  }
+  .greeting-sub { font-size: 0.7rem; color: #3a7a64; margin-bottom: 4px; }
+  .greeting-main { font-size: 1.1rem; font-weight: 500; transition: all 0.3s; }
+
+  /* ── Quick tools ── */
+  .quick-tools {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 12px;
+    transition: all 0.5s;
+  }
+  .quick-tools.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .quick-tools.cols-2 { grid-template-columns: 1fr 1fr; }
+  .quick-tool {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 6px;
+    padding: 14px 8px;
+    background: rgba(10,25,20,0.6);
+    border: 1px solid rgba(100,220,180,0.06);
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    color: inherit;
+  }
+  .quick-tool:hover {
+    border-color: rgba(100,220,180,0.12);
+    box-shadow: 0 0 30px var(--glow);
+  }
+  .quick-tool .tool-icon { font-size: 1.3rem; }
+  .quick-tool .tool-label { font-size: 0.7rem; color: #6aa88e; }
+  .low-energy .quick-tool {
+    padding: 18px 8px;
+  }
+  .low-energy .quick-tool .tool-icon { font-size: 1.5rem; }
+
+  /* ── Breathing ── */
+  .breathing-quick-start {
+    text-align: center;
+    padding: 20px;
+  }
+  .breathing-circle-preview {
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    background: rgba(100,220,180,0.02);
+    box-shadow: 0 0 40px var(--glow), inset 0 0 30px var(--glow);
+    animation: gentle-breathe 4s ease-in-out infinite;
+    transition: all 0.5s;
+    cursor: pointer;
+  }
+  @keyframes gentle-breathe {
+    0%, 100% { transform: scale(0.9); opacity: 0.7; }
+    50% { transform: scale(1.05); opacity: 1; }
+  }
+  .low-energy .breathing-circle-preview {
+    animation-duration: 6s;
+    width: 140px; height: 140px;
+  }
+  .breathing-circle-preview .breath-text {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 500;
+  }
+  .breathing-circle-preview .breath-hint {
+    font-size: 0.6rem;
+    color: #3a7a64;
+    margin-top: 2px;
+  }
+  .breathing-options {
+    margin-top: 12px;
+  }
+  .breath-option {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px;
+    background: rgba(10,25,20,0.4);
+    border: 1px solid rgba(100,220,180,0.06);
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+  }
+  .breath-option:hover { background: var(--hover-bg); }
+  .breath-option .opt-icon { font-size: 1.2rem; }
+  .breath-option .opt-name { color: #d0e8dc; font-weight: 500; }
+  .breath-option .opt-desc { color: #3a7a64; font-size: 0.7rem; }
+
+  /* ── PHQ-9 ── */
+  .phq-question {
+    display: flex; align-items: flex-start; gap: 10px;
+    margin-bottom: 12px;
+  }
+  .phq-emoji {
+    font-size: 1.5rem;
+    flex-shrink: 0;
+    width: 36px; text-align: center;
+  }
+  .phq-text {
+    font-size: 0.9rem;
+    font-weight: 500;
+    line-height: 1.5;
+  }
+  .phq-option {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 14px;
+    background: rgba(10,25,20,0.4);
+    border: 1px solid rgba(100,220,180,0.06);
+    border-radius: 12px;
+    margin-bottom: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.8rem;
+  }
+  .low-energy .phq-option { padding: 16px 14px; margin-bottom: 8px; }
+  .phq-option:hover { background: var(--hover-bg); }
+  .phq-safe-exit {
+    display: block;
+    margin: 16px auto 0;
+    font-size: 0.75rem;
+    color: #3a7a64;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+  .phq-safe-exit:hover { color: #6aa88e; background: rgba(100,220,180,0.04); }
+
+  /* ── Toolbox ── */
+  .toolbox-comfort {
+    text-align: center;
+    padding: 12px;
+    font-size: 0.8rem;
+    color: #3a7a64;
+    background: rgba(139,92,246,0.03);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(139,92,246,0.06);
+  }
+  .tool-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px;
+    background: rgba(10,25,20,0.6);
+    border: 1px solid rgba(100,220,180,0.06);
+    border-radius: 14px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tool-item:hover {
+    border-color: rgba(100,220,180,0.12);
+    box-shadow: 0 0 30px var(--glow);
+  }
+  .tool-item .ti-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--hover-bg);
+    font-size: 1.2rem;
+  }
+  .tool-item .ti-name { font-size: 0.85rem; font-weight: 500; }
+  .tool-item .ti-desc { font-size: 0.7rem; color: #3a7a64; }
+  .tool-item .ti-arrow { color: #3a7a64; margin-left: auto; }
+  .tool-recommended {
+    position: relative;
+  }
+  .tool-recommended::after {
+    content: '推荐';
+    position: absolute;
+    top: 8px; right: 12px;
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #060f0d;
+    font-weight: 600;
+  }
+
+  /* ── Feature blocks ── */
+  .feature-block {
+    max-width: 900px;
+    width: 100%;
+    margin-bottom: 48px;
+  }
+  .feature-block h2 {
+    font-size: 1rem;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .feature-block .subtitle {
+    font-size: 0.8rem;
+    color: #3a7a64;
+    margin-bottom: 20px;
+  }
+
+  /* ── Responsive ── */
+  @media (max-width: 768px) {
+    .comparison { grid-template-columns: 1fr; }
+    .phone { max-width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<h1>IGOTU 抑郁患者 UX 原型</h1>
+<h2>拖动滑块改变情绪分数，观察界面如何自适应</h2>
+
+<!-- Controls -->
+<div class="controls" id="controls">
+  <label>情绪分数</label>
+  <input type="range" min="1" max="5" value="3" class="mood-slider" id="moodSlider"
+    oninput="updateMood(this.value)">
+  <div class="mood-display" id="moodEmoji">😐</div>
+  <div class="mood-label" id="moodLabel">一般 · 安静的苔藓</div>
+  <div class="mode-badge" id="modeBadge" style="background: rgba(20,184,166,0.15); color: #2dd4bf;">
+    正常模式
+  </div>
+</div>
+
+<!-- ═══ Feature 1: Navigation ═══ -->
+<div class="feature-block">
+  <h2>① 导航自适应</h2>
+  <p class="subtitle">低情绪时导航精简为图标，减少认知负荷</p>
+  <div class="comparison">
+    <div>
+      <div class="section-title">情绪 3-5（正常模式）</div>
+      <div class="phone" id="phone-nav-normal">
+        <div class="nav">
+          <div class="nav-logo"><span>🌱</span> IGOTU</div>
+          <div class="nav-links">
+            <button class="nav-link active"><span class="text">首页</span><span class="icon">🏠</span></button>
+            <button class="nav-link"><span class="text">对话</span><span class="icon">💭</span></button>
+            <button class="nav-link"><span class="text">工具箱</span><span class="icon">🧰</span></button>
+            <button class="nav-link"><span class="text">情绪</span><span class="icon">🌿</span></button>
+            <button class="nav-link"><span class="text">分析</span><span class="icon">📊</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">情绪 1-2（低能量模式）</div>
+      <div class="phone" id="phone-nav-low">
+        <div class="nav">
+          <div class="nav-logo"><span>🌱</span> IGOTU</div>
+          <div class="nav-links low-energy">
+            <button class="nav-link active"><span class="text">首页</span><span class="icon">🏠</span></button>
+            <button class="nav-link"><span class="text">对话</span><span class="icon">💭</span></button>
+            <button class="nav-link"><span class="text">工具箱</span><span class="icon">🧰</span></button>
+            <button class="nav-link"><span class="text">情绪</span><span class="icon">🌿</span></button>
+            <button class="nav-link"><span class="text">分析</span><span class="icon">📊</span></button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Feature 2: Home Page ═══ -->
+<div class="feature-block">
+  <h2>② 首页自适应 + Comfort Glow</h2>
+  <p class="subtitle">低情绪时减少选择项，添加温柔包裹感的底部光晕</p>
+  <div class="comparison">
+    <div>
+      <div class="section-title">当前情绪效果（实时）</div>
+      <div class="phone" id="phone-home">
+        <div class="nav">
+          <div class="nav-logo"><span>🌱</span> IGOTU</div>
+          <div class="nav-links" id="home-nav-links">
+            <button class="nav-link active"><span class="text">首页</span><span class="icon">🏠</span></button>
+            <button class="nav-link"><span class="text">对话</span><span class="icon">💭</span></button>
+            <button class="nav-link"><span class="text">工具箱</span><span class="icon">🧰</span></button>
+            <button class="nav-link"><span class="text">情绪</span><span class="icon">🌿</span></button>
+          </div>
+        </div>
+        <div class="phone-content">
+          <div class="greeting-box" id="greeting-box">
+            <div class="greeting-sub" id="greeting-time">晚上好</div>
+            <div class="greeting-main" id="greeting-text">你今天还好吗？</div>
+          </div>
+
+          <div id="quick-tools-container">
+            <div class="quick-tools cols-3" id="quick-tools-normal">
+              <a class="quick-tool"><span class="tool-icon">🍃</span><span class="tool-label">呼吸空间</span></a>
+              <a class="quick-tool"><span class="tool-icon">💭</span><span class="tool-label">和伙伴聊聊</span></a>
+              <a class="quick-tool"><span class="tool-icon">🌿</span><span class="tool-label">记录感受</span></a>
+            </div>
+            <div class="quick-tools cols-2" id="quick-tools-low" style="display:none;">
+              <a class="quick-tool"><span class="tool-icon">🍃</span><span class="tool-label">深呼吸</span></a>
+              <a class="quick-tool"><span class="tool-icon">💭</span><span class="tool-label">聊聊</span></a>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <div style="font-size:0.8rem;color:#6aa88e;margin-bottom:8px;">🌱 今日种下的种子</div>
+            <div style="text-align:center;padding:20px 0;">
+              <div style="font-size:2rem;">🌱</div>
+              <div style="font-size:0.8rem;color:#6aa88e;margin-top:8px;" id="empty-hint">
+                点击右下角的 ✨ 种下第一颗种子
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-title">设计说明</div>
+      <div style="font-size:0.85rem; line-height:1.8; color:#6aa88e;">
+        <p><strong style="color:#d0e8dc;">Comfort Glow 舒适光晕</strong></p>
+        <p>当情绪 ≤ 2 时，页面底部出现极微弱的暖紫色光晕，像毛毯一样包裹用户。光晕完全不影响操作，只是营造被守护的感觉。</p>
+        <br>
+        <p><strong style="color:#d0e8dc;">自适应快捷工具</strong></p>
+        <p>正常模式：3 个选项（呼吸、聊聊、记录感受）</p>
+        <p>低能量模式：只留 2 个最低门槛的选项（呼吸、聊聊），文字更短。</p>
+        <br>
+        <p><strong style="color:#d0e8dc;">情绪感知问候</strong></p>
+        <p>正常：你今天还好吗？</p>
+        <p>低情绪：你来了就好。（无条件接纳，不追问状态）</p>
+        <br>
+        <p><strong style="color:#d0e8dc;">动画减速</strong></p>
+        <p>低情绪时所有动画速度降低 40%，更缓慢更安静。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Feature 3: Breathing Quick Start ═══ -->
+<div class="feature-block">
+  <h2>③ 呼吸练习：一键启动</h2>
+  <p class="subtitle">低情绪时跳过配置页，直接一键进入沉浸模式</p>
+  <div class="comparison">
+    <div>
+      <div class="section-title">低能量模式（一键启动）</div>
+      <div class="phone" id="phone-breath-quick">
+        <div class="phone-content">
+          <div class="breathing-quick-start">
+            <div style="font-size:0.75rem;color:#3a7a64;margin-bottom:16px;">← 返回工具箱</div>
+            <div style="font-size:0.8rem;color:#6aa88e;margin-bottom:20px;">跟着圆圈呼吸</div>
+            <div class="breathing-circle-preview" onclick="this.style.boxShadow='0 0 80px var(--glow)'">
+              <span class="breath-text">点击开始</span>
+              <span class="breath-hint">简单深呼吸 4-6</span>
+            </div>
+            <div style="font-size:0.7rem;color:#3a7a64;margin-top:16px;">
+              3 个循环 · 约 1.5 分钟
+            </div>
+            <div style="margin-top:24px;font-size:0.7rem;color:#3a7a64;cursor:pointer;">
+              想换个呼吸技巧？→
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">正常模式（可配置）</div>
+      <div class="phone" id="phone-breath-normal">
+        <div class="phone-content">
+          <div style="font-size:0.75rem;color:#3a7a64;margin-bottom:12px;">← 返回工具箱</div>
+          <div style="font-size:1.1rem;font-weight:500;margin-bottom:4px;">呼吸引导</div>
+          <div style="font-size:0.8rem;color:#6aa88e;margin-bottom:16px;">选择一个呼吸技巧，跟着节奏来。</div>
+
+          <div class="breath-option" style="border-color: var(--accent); box-shadow: 0 0 15px var(--glow);">
+            <span class="opt-icon">◻️</span>
+            <div>
+              <div class="opt-name">方块呼吸 4-4-4-4</div>
+              <div class="opt-desc">平衡型，适合焦虑时使用</div>
+            </div>
+          </div>
+          <div class="breath-option">
+            <span class="opt-icon">🌙</span>
+            <div>
+              <div class="opt-name">放松呼吸 4-7-8</div>
+              <div class="opt-desc">副交感神经激活，适合睡前</div>
+            </div>
+          </div>
+          <div class="breath-option">
+            <span class="opt-icon">🍃</span>
+            <div>
+              <div class="opt-name">简单深呼吸 4-6</div>
+              <div class="opt-desc">最简单，低能量时使用</div>
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.8rem;">
+              <span style="color:#6aa88e;">循环次数</span>
+              <span style="color:var(--accent);font-weight:600;">3</span>
+            </div>
+            <div style="height:4px;background:#1a2e28;border-radius:2px;margin-top:8px;">
+              <div style="width:30%;height:100%;background:var(--accent);border-radius:2px;"></div>
+            </div>
+          </div>
+
+          <button style="width:100%;margin-top:16px;padding:12px;background:var(--accent);color:#060f0d;border:none;border-radius:12px;font-weight:600;font-size:0.85rem;cursor:pointer;">
+            开始呼吸
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Feature 4: PHQ-9 with Emoji + Safe Exit ═══ -->
+<div class="feature-block">
+  <h2>④ PHQ-9：emoji 锚点 + 安全退出</h2>
+  <p class="subtitle">每个问题加入 emoji 降低阅读负担，每一步都有温柔退出</p>
+  <div class="comparison">
+    <div>
+      <div class="section-title">改进后（emoji + 安全退出）</div>
+      <div class="phone" id="phone-phq-new">
+        <div class="phone-content">
+          <div style="font-size:0.75rem;color:#3a7a64;margin-bottom:12px;">← 返回工具箱</div>
+          <div style="font-size:1rem;font-weight:500;margin-bottom:12px;">PHQ-9 自评</div>
+
+          <!-- Progress -->
+          <div style="height:3px;background:rgba(100,220,180,0.06);border-radius:2px;margin-bottom:16px;">
+            <div style="width:33%;height:100%;background:var(--accent);border-radius:2px;box-shadow:0 0 6px var(--glow);"></div>
+          </div>
+
+          <div class="phq-question">
+            <div class="phq-emoji">😶</div>
+            <div class="phq-text">做事时提不起劲或没有兴趣</div>
+          </div>
+
+          <div class="phq-option">
+            <span>完全没有</span>
+            <span style="color:#3a7a64;font-size:0.7rem;">0</span>
+          </div>
+          <div class="phq-option">
+            <span>有几天</span>
+            <span style="color:#3a7a64;font-size:0.7rem;">1</span>
+          </div>
+          <div class="phq-option">
+            <span>一半以上天数</span>
+            <span style="color:#3a7a64;font-size:0.7rem;">2</span>
+          </div>
+          <div class="phq-option">
+            <span>几乎每天</span>
+            <span style="color:#3a7a64;font-size:0.7rem;">3</span>
+          </div>
+
+          <button class="phq-safe-exit">稍后再说 · 进度已保存 →</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">PHQ-9 问题 emoji 映射</div>
+      <div style="font-size:0.8rem; line-height:2; color:#6aa88e;">
+        <div>😶 做事时提不起劲或没有兴趣</div>
+        <div>😔 感到心情低落、沮丧或绝望</div>
+        <div>🌙 入睡困难、睡不安稳或睡眠过多</div>
+        <div>🔋 感觉疲倦或没有活力</div>
+        <div>🍽️ 食欲不振或吃太多</div>
+        <div>💭 觉得自己很糟糕或很失败</div>
+        <div>🔍 对事物专注有困难</div>
+        <div>🐢 动作或说话速度缓慢</div>
+        <div>🆘 有不如死掉的念头</div>
+        <br>
+        <p style="color:#3a7a64;">emoji 作为视觉锚点，帮助低能量用户在不完全阅读文字的情况下也能理解问题含义。</p>
+        <br>
+        <p><strong style="color:#d0e8dc;">安全退出</strong></p>
+        <p>"稍后再说 · 进度已保存" 替代传统的"取消"——不制造愧疚感，明确告知进度安全。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ Feature 5: Toolbox Adaptive ═══ -->
+<div class="feature-block">
+  <h2>⑤ 工具箱：低能量推荐</h2>
+  <p class="subtitle">低情绪时显示安慰语 + 智能推荐最低门槛工具</p>
+  <div class="comparison">
+    <div>
+      <div class="section-title">低能量模式</div>
+      <div class="phone comfort-glow" id="phone-toolbox-low">
+        <div class="phone-content">
+          <div style="font-size:1rem;font-weight:500;margin-bottom:12px;">🌿 工具箱</div>
+
+          <div class="toolbox-comfort">
+            什么都不想做？也可以只是待在这里。
+          </div>
+
+          <div class="tool-item tool-recommended">
+            <div class="ti-icon">🌬️</div>
+            <div>
+              <div class="ti-name">呼吸引导</div>
+              <div class="ti-desc">跟着圆圈呼吸就好</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+
+          <div class="tool-item">
+            <div class="ti-icon">🌍</div>
+            <div>
+              <div class="ti-name">扎根练习</div>
+              <div class="ti-desc">用五感回到当下</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+
+          <div class="tool-item">
+            <div class="ti-icon">📋</div>
+            <div>
+              <div class="ti-name">PHQ-9 自评</div>
+              <div class="ti-desc">了解你现在的状态</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+
+          <div class="tool-item">
+            <div class="ti-icon">🔍</div>
+            <div>
+              <div class="ti-name">想法检验</div>
+              <div class="ti-desc">检验消极想法</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="section-title">正常模式</div>
+      <div class="phone" id="phone-toolbox-normal">
+        <div class="phone-content">
+          <div style="font-size:1rem;font-weight:500;margin-bottom:4px;">🌿 工具箱</div>
+          <div style="font-size:0.8rem;color:#6aa88e;margin-bottom:16px;">这些工具随时可用，没有对错之分</div>
+
+          <div class="tool-item">
+            <div class="ti-icon">📋</div>
+            <div>
+              <div class="ti-name">PHQ-9 自评</div>
+              <div class="ti-desc">标准化抑郁筛查问卷，追踪症状变化</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+
+          <div class="tool-item">
+            <div class="ti-icon">🌬️</div>
+            <div>
+              <div class="ti-name">呼吸引导</div>
+              <div class="ti-desc">三种呼吸技巧，帮助你缓解焦虑</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+
+          <div class="tool-item">
+            <div class="ti-icon">🌍</div>
+            <div>
+              <div class="ti-name">扎根练习 5-4-3-2-1</div>
+              <div class="ti-desc">用五感把自己拉回当下</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+
+          <div class="tool-item">
+            <div class="ti-icon">🔍</div>
+            <div>
+              <div class="ti-name">想法检验</div>
+              <div class="ti-desc">认知行为疗法：检验自动化消极想法</div>
+            </div>
+            <span class="ti-arrow">→</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MOODS = {
+  1: { emoji: '😢', label: '很低落', metaphor: '深夜的萤火虫', accent: '#8b5cf6', glow: 'rgba(139,92,246,0.08)', gradFrom: '#2e1065', gradTo: '#1a0a3e', hoverBg: 'rgba(139,92,246,0.1)', navActive: 'rgba(139,92,246,0.15)', navText: '#a78bfa', lightLine: 'rgba(139,92,246,0.25)', comfort: 'rgba(139,92,246,0.04)' },
+  2: { emoji: '😕', label: '不太好', metaphor: '黎明前的微光', accent: '#6366f1', glow: 'rgba(99,102,241,0.08)', gradFrom: '#1e1b4b', gradTo: '#0f0d2e', hoverBg: 'rgba(99,102,241,0.1)', navActive: 'rgba(99,102,241,0.15)', navText: '#818cf8', lightLine: 'rgba(99,102,241,0.25)', comfort: 'rgba(99,102,241,0.03)' },
+  3: { emoji: '😐', label: '一般', metaphor: '安静的苔藓', accent: '#14b8a6', glow: 'rgba(20,184,166,0.08)', gradFrom: '#0a2e28', gradTo: '#061a17', hoverBg: 'rgba(20,184,166,0.1)', navActive: 'rgba(20,184,166,0.15)', navText: '#2dd4bf', lightLine: 'rgba(20,184,166,0.25)', comfort: 'transparent' },
+  4: { emoji: '🙂', label: '还不错', metaphor: '新叶舒展', accent: '#10b981', glow: 'rgba(16,185,129,0.08)', gradFrom: '#052e16', gradTo: '#021a0d', hoverBg: 'rgba(16,185,129,0.1)', navActive: 'rgba(16,185,129,0.15)', navText: '#34d399', lightLine: 'rgba(16,185,129,0.25)', comfort: 'transparent' },
+  5: { emoji: '😊', label: '很好', metaphor: '阳光穿过树冠', accent: '#f59e0b', glow: 'rgba(245,158,11,0.08)', gradFrom: '#451a03', gradTo: '#2a1001', hoverBg: 'rgba(245,158,11,0.1)', navActive: 'rgba(245,158,11,0.15)', navText: '#fbbf24', lightLine: 'rgba(245,158,11,0.25)', comfort: 'transparent' },
+};
+
+function updateMood(val) {
+  const m = MOODS[val];
+  const isLow = val <= 2;
+
+  // Update CSS vars
+  document.documentElement.style.setProperty('--accent', m.accent);
+  document.documentElement.style.setProperty('--glow', m.glow);
+  document.documentElement.style.setProperty('--grad-from', m.gradFrom);
+  document.documentElement.style.setProperty('--grad-to', m.gradTo);
+  document.documentElement.style.setProperty('--hover-bg', m.hoverBg);
+  document.documentElement.style.setProperty('--nav-active', m.navActive);
+  document.documentElement.style.setProperty('--nav-text', m.navText);
+  document.documentElement.style.setProperty('--light-line', m.lightLine);
+  document.documentElement.style.setProperty('--comfort', m.comfort);
+  document.documentElement.style.setProperty('--bg', '#060f0d');
+
+  // Update display
+  document.getElementById('moodEmoji').textContent = m.emoji;
+  document.getElementById('moodLabel').textContent = `${m.label} · ${m.metaphor}`;
+
+  // Mode badge
+  const badge = document.getElementById('modeBadge');
+  if (isLow) {
+    badge.textContent = '低能量模式';
+    badge.style.background = `${m.accent}20`;
+    badge.style.color = m.accent;
+  } else {
+    badge.textContent = '正常模式';
+    badge.style.background = `${m.accent}20`;
+    badge.style.color = m.accent;
+  }
+
+  // Home page adaptations
+  const homePhone = document.getElementById('phone-home');
+  const homeNavLinks = document.getElementById('home-nav-links');
+  const greetingText = document.getElementById('greeting-text');
+  const quickNormal = document.getElementById('quick-tools-normal');
+  const quickLow = document.getElementById('quick-tools-low');
+  const emptyHint = document.getElementById('empty-hint');
+
+  if (isLow) {
+    homePhone.classList.add('comfort-glow');
+    homeNavLinks.classList.add('low-energy');
+    greetingText.textContent = '你来了就好。';
+    quickNormal.style.display = 'none';
+    quickLow.style.display = 'grid';
+    emptyHint.textContent = '什么都不做也可以';
+  } else {
+    homePhone.classList.remove('comfort-glow');
+    homeNavLinks.classList.remove('low-energy');
+    greetingText.textContent = '你今天还好吗？';
+    quickNormal.style.display = 'grid';
+    quickLow.style.display = 'none';
+    emptyHint.textContent = '点击右下角的 ✨ 种下第一颗种子';
+  }
+
+  // Update all phones
+  document.querySelectorAll('.phone').forEach(p => {
+    if (isLow && (p.id === 'phone-toolbox-low' || p.id === 'phone-home')) {
+      p.classList.add('comfort-glow');
+    } else if (!isLow) {
+      p.classList.remove('comfort-glow');
+    }
+  });
+}
+
+// Init
+updateMood(3);
+</script>
+
+</body>
+</html>

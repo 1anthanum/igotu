@@ -36,6 +36,10 @@
 
   /* 颜色过渡（AI 联动时动态设置） */
   --mood-transition: 0ms;
+
+  /* 自适应系统（运行时由 JS 覆盖） */
+  --mood-comfort-glow: transparent;
+  --animation-speed: 1;
 }
 
 @layer base {
@@ -304,4 +308,63 @@
 @keyframes typing-bounce {
   0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
   30% { opacity: 1; transform: translateY(-4px); }
+}
+
+/* ══════════════════════════════════════════════════
+   低能量模式 — 情绪 ≤ 2 时自动激活
+   减速动画 · 放大触摸目标 · 柔化对比度 · 舒适光晕
+   ══════════════════════════════════════════════════ */
+
+/* ── 舒适光晕：底部暖光包裹 ── */
+body.low-energy::after {
+  content: '';
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: 200px;
+  background: radial-gradient(ellipse at bottom center, var(--mood-comfort-glow), transparent);
+  pointer-events: none;
+  z-index: 0;
+  transition: opacity 1s ease;
+}
+
+/* ── 动画减速 ── */
+body.low-energy .animate-float-in { animation-duration: 0.8s; }
+body.low-energy .page-enter-active,
+body.low-energy .page-leave-active { transition-duration: 0.4s; }
+body.low-energy .animate-pulse-glow { animation-duration: 6s; }
+
+/* ── 触摸目标放大 ── */
+body.low-energy .btn-primary { min-height: 52px; }
+body.low-energy .btn-secondary { min-height: 48px; }
+
+/* ── 对比度柔化 ── */
+body.low-energy {
+  --text-primary: #bdd4c8;
+  --text-secondary: #5e9a80;
+}
+
+/* ── 安全退出提示 ── */
+.safe-exit-hint {
+  display: block;
+  margin: 16px auto 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  text-align: center;
+}
+.safe-exit-hint:hover {
+  color: var(--text-secondary);
+  background: rgba(100,220,180,0.04);
+}
+
+/* ── 减少动画（系统级偏好） ── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-in { animation: none !important; opacity: 1; transform: none; }
+  .animate-pulse-glow { animation: none !important; }
+  .page-enter-active, .page-leave-active { transition: none !important; }
 }

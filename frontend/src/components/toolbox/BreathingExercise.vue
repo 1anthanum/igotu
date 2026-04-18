@@ -44,6 +44,7 @@ const selectedTech = ref(0);
 const targetCycles = ref(3);
 const isActive = ref(false);
 const isDone = ref(false);
+const showFullConfig = ref(false);
 const currentCycle = ref(0);
 const currentPhaseIndex = ref(0);
 const countdown = ref(0);
@@ -64,14 +65,12 @@ const circleScale = computed(() => {
   return 1.0;
 });
 
-const totalPhaseTime = computed(() => {
-  if (!currentPhase.value) return 1;
-  return currentPhase.value.duration;
-});
-
-const phaseProgress = computed(() => {
-  return 1 - (countdown.value / totalPhaseTime.value);
-});
+/** 快速开始：默认最简单的技巧（4-6），3 个循环 */
+function quickStart() {
+  selectedTech.value = 2;
+  targetCycles.value = 3;
+  start();
+}
 
 function start() {
   isActive.value = true;
@@ -130,7 +129,6 @@ onUnmounted(() => {
     class="fixed inset-0 z-50 flex flex-col items-center justify-center"
     style="background: var(--bg-primary);"
   >
-    <!-- Ambient glow rings -->
     <div class="breath-ambient">
       <div
         class="ambient-ring ambient-ring-1"
@@ -148,14 +146,12 @@ onUnmounted(() => {
       />
     </div>
 
-    <!-- Info bar top -->
     <div class="absolute top-8 left-0 right-0 text-center">
       <p class="text-sm" style="color: var(--text-muted);">
         {{ technique.name }} — 循环 {{ currentCycle + 1 }} / {{ targetCycles }}
       </p>
     </div>
 
-    <!-- Main breathing circle -->
     <div class="breath-container">
       <div
         class="breath-circle"
@@ -174,12 +170,10 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Instruction -->
     <p class="mt-8 text-sm" style="color: var(--text-secondary);">
       {{ currentPhase.instruction }}
     </p>
 
-    <!-- Phase dots -->
     <div class="flex gap-3 mt-6">
       <div
         v-for="(phase, i) in technique.phases"
@@ -206,13 +200,12 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <!-- Stop button -->
     <button
       @click="stop"
       class="mt-10 px-6 py-2 rounded-xl text-sm transition-all"
       style="background: rgba(100,220,180,0.05); color: var(--text-muted); border: 1px solid var(--border-subtle);"
     >
-      停止
+      先到这里
     </button>
   </div>
 
@@ -234,7 +227,7 @@ onUnmounted(() => {
         感受一下此刻的身体。
       </p>
       <div class="flex gap-3 justify-center mt-6">
-        <button @click="isDone = false" class="btn-secondary">再来一次</button>
+        <button @click="isDone = false; showFullConfig = false" class="btn-secondary">再来一次</button>
         <button @click="router.push('/toolbox')" class="btn-ghost">返回工具箱</button>
       </div>
     </div>
@@ -250,143 +243,155 @@ onUnmounted(() => {
       ← 返回工具箱
     </button>
 
-    <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">呼吸引导</h1>
-    <p class="text-sm mb-6" style="color: var(--text-secondary);">选择一个呼吸技巧，跟着节奏来。</p>
+    <!-- Quick start mode (default) -->
+    <div v-if="!showFullConfig" class="text-center animate-float-in">
+      <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">呼吸引导</h1>
+      <p class="text-sm mb-8" style="color: var(--text-secondary);">跟着圆圈呼吸</p>
 
-    <div class="space-y-3">
       <div
-        v-for="(tech, i) in TECHNIQUES"
-        :key="i"
-        class="card p-4 flex items-center justify-between cursor-pointer transition-all"
+        class="quick-start-circle mx-auto cursor-pointer"
         :style="{
-          borderColor: selectedTech === i ? moodTheme.palette.accent : undefined,
-          boxShadow: selectedTech === i ? `0 0 20px ${moodTheme.palette.glow}` : undefined,
+          borderColor: moodTheme.palette.accent,
+          boxShadow: `0 0 40px ${moodTheme.palette.glow}, inset 0 0 30px ${moodTheme.palette.glow}`,
         }"
-        @click="selectedTech = i"
+        @click="quickStart"
       >
-        <div class="flex items-center gap-3">
-          <span class="text-2xl">{{ tech.icon }}</span>
-          <div>
-            <p class="font-medium text-sm" style="color: var(--text-primary);">{{ tech.name }}</p>
-            <p class="text-xs" style="color: var(--text-muted);">{{ tech.desc }}</p>
+        <span class="text-sm font-medium" :style="{ color: moodTheme.palette.accent }">点击开始</span>
+        <span class="text-xs mt-1" style="color: var(--text-muted);">简单深呼吸 4-6</span>
+      </div>
+
+      <p class="text-xs mt-6" style="color: var(--text-muted);">
+        3 个循环 · 约 1.5 分钟
+      </p>
+
+      <button
+        @click="showFullConfig = true"
+        class="mt-6 text-xs transition-colors"
+        style="color: var(--text-muted);"
+      >
+        想换个呼吸技巧？→
+      </button>
+    </div>
+
+    <!-- Full config mode -->
+    <div v-else class="animate-float-in">
+      <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">呼吸引导</h1>
+      <p class="text-sm mb-6" style="color: var(--text-secondary);">选择一个呼吸技巧，跟着节奏来。</p>
+
+      <div class="space-y-3">
+        <div
+          v-for="(tech, i) in TECHNIQUES"
+          :key="i"
+          class="card p-4 flex items-center justify-between cursor-pointer transition-all"
+          :style="{
+            borderColor: selectedTech === i ? moodTheme.palette.accent : undefined,
+            boxShadow: selectedTech === i ? `0 0 20px ${moodTheme.palette.glow}` : undefined,
+          }"
+          @click="selectedTech = i"
+        >
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">{{ tech.icon }}</span>
+            <div>
+              <p class="font-medium text-sm" style="color: var(--text-primary);">{{ tech.name }}</p>
+              <p class="text-xs" style="color: var(--text-muted);">{{ tech.desc }}</p>
+            </div>
+          </div>
+          <div
+            class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
+            :style="{
+              borderColor: selectedTech === i ? moodTheme.palette.accent : 'var(--border-medium)',
+              background: selectedTech === i ? moodTheme.palette.accent : 'transparent',
+            }"
+          >
+            <div v-if="selectedTech === i" class="w-2 h-2 rounded-full" style="background: var(--text-inverse);" />
           </div>
         </div>
-        <div
-          class="w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all"
-          :style="{
-            borderColor: selectedTech === i ? moodTheme.palette.accent : 'var(--border-medium)',
-            background: selectedTech === i ? moodTheme.palette.accent : 'transparent',
-          }"
-        >
-          <div v-if="selectedTech === i" class="w-2 h-2 rounded-full" style="background: var(--text-inverse);" />
+      </div>
+
+      <div class="card p-4 mt-4">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-sm" style="color: var(--text-secondary);">循环次数</span>
+          <span class="text-sm font-semibold" :style="{ color: moodTheme.palette.accent }">{{ targetCycles }}</span>
         </div>
+        <input
+          type="range"
+          v-model.number="targetCycles"
+          min="1"
+          max="10"
+          class="range-slider w-full"
+        />
+        <p class="text-xs mt-1" style="color: var(--text-muted);">
+          节奏: {{ technique.phases.map(p => `${p.label} ${p.duration}s`).join(' → ') }}
+        </p>
       </div>
-    </div>
 
-    <!-- Cycle selector -->
-    <div class="card p-4 mt-4">
-      <div class="flex items-center justify-between mb-2">
-        <span class="text-sm" style="color: var(--text-secondary);">循环次数</span>
-        <span class="text-sm font-semibold" :style="{ color: moodTheme.palette.accent }">{{ targetCycles }}</span>
-      </div>
-      <input
-        type="range"
-        v-model.number="targetCycles"
-        min="1"
-        max="10"
-        class="range-slider w-full"
-      />
-      <p class="text-xs mt-1" style="color: var(--text-muted);">
-        节奏: {{ technique.phases.map(p => `${p.label} ${p.duration}s`).join(' → ') }}
-      </p>
-    </div>
+      <button @click="start" class="btn-primary w-full mt-6">开始呼吸</button>
 
-    <button @click="start" class="btn-primary w-full mt-6">开始呼吸</button>
+      <button @click="showFullConfig = false" class="safe-exit-hint mt-2">
+        ← 回到快速开始
+      </button>
+    </div>
   </div>
 </template>
 
 <style scoped>
-/* ── Immersive breathing ── */
-.breath-ambient {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-}
-.ambient-ring {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.5;
-}
-.ambient-ring-2 {
-  opacity: 0.25;
-}
-
-.breath-container {
-  position: relative;
-  width: 240px;
-  height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.breath-circle {
-  width: 220px;
-  height: 220px;
+.quick-start-circle {
+  width: 160px;
+  height: 160px;
   border-radius: 50%;
   border: 3px solid;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  background: rgba(100,220,180,0.02);
+  transition: all 0.3s;
+  animation: gentle-breathe 4s ease-in-out infinite;
+}
+.quick-start-circle:hover { filter: brightness(1.1); }
+.quick-start-circle:active { transform: scale(0.95) !important; }
+
+@keyframes gentle-breathe {
+  0%, 100% { transform: scale(0.92); opacity: 0.8; }
+  50% { transform: scale(1.02); opacity: 1; }
+}
+
+.breath-ambient {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+.ambient-ring {
+  position: absolute; width: 300px; height: 300px;
+  border-radius: 50%;
+  transition: transform 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.5;
+}
+.ambient-ring-2 { opacity: 0.25; }
+.breath-container {
+  position: relative; width: 240px; height: 240px;
+  display: flex; align-items: center; justify-content: center;
+}
+.breath-circle {
+  width: 220px; height: 220px; border-radius: 50%;
+  border: 3px solid;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
   transition: transform 1.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 1.2s ease;
   background: rgba(100,220,180,0.02);
 }
+.breath-label { font-size: 1.125rem; font-weight: 600; letter-spacing: 0.1em; }
+.breath-countdown { font-size: 3.5rem; font-weight: 200; line-height: 1; margin-top: 0.25rem; }
 
-.breath-label {
-  font-size: 1.125rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-}
-
-.breath-countdown {
-  font-size: 3.5rem;
-  font-weight: 200;
-  line-height: 1;
-  margin-top: 0.25rem;
-}
-
-/* ── Range slider ── */
 .range-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border-medium);
-  outline: none;
+  -webkit-appearance: none; appearance: none;
+  height: 4px; border-radius: 2px; background: var(--border-medium); outline: none;
 }
 .range-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--mood-accent);
-  cursor: pointer;
-  box-shadow: 0 0 10px var(--mood-glow);
+  -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--mood-accent); cursor: pointer; box-shadow: 0 0 10px var(--mood-glow);
 }
 .range-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--mood-accent);
-  cursor: pointer;
-  border: none;
-  box-shadow: 0 0 10px var(--mood-glow);
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--mood-accent); cursor: pointer; border: none; box-shadow: 0 0 10px var(--mood-glow);
 }
 </style>

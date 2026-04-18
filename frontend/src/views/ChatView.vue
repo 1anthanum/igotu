@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, nextTick, onMounted, watch } from 'vue';
+import { ref, computed, nextTick, onMounted, watch } from 'vue';
 import { useChatStore } from '@/stores/chat';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import ChatMessage from '@/components/chat/ChatMessage.vue';
@@ -19,6 +19,28 @@ const OPENING_CHOICES = [
 ];
 
 const showOpening = ref(false);
+
+/** 情绪自适应快捷回复 */
+const quickReplies = computed(() => {
+  if (moodTheme.isLowEnergy) {
+    return [
+      { text: '嗯', icon: '💬' },
+      { text: '不想说话', icon: '🤫' },
+      { text: '陪着我就好', icon: '🫂' },
+    ];
+  }
+  return [
+    { text: '今天还可以', icon: '🌤️' },
+    { text: '有些累', icon: '🍃' },
+    { text: '想聊聊', icon: '💭' },
+    { text: '需要帮助', icon: '🆘' },
+  ];
+});
+
+const inputPlaceholder = computed(() => {
+  if (moodTheme.isLowEnergy) return '打字或者点上面的…';
+  return '在这里，慢慢说...';
+});
 
 onMounted(async () => {
   await chatStore.fetchSessions();
@@ -146,9 +168,8 @@ async function loadSession(sessionId: string) {
       <!-- Typing indicator -->
       <div v-if="chatStore.sending" class="flex gap-3 mb-4">
         <div
-          class="w-8 h-8 rounded-full flex items-center justify-content text-lg flex-shrink-0"
+          class="w-8 h-8 rounded-full flex items-center justify-center text-lg flex-shrink-0"
           :style="{ background: moodTheme.palette.accentSoft }"
-          style="display: flex; align-items: center; justify-content: center;"
         >
           🌱
         </div>
@@ -173,11 +194,32 @@ async function loadSession(sessionId: string) {
 
     <!-- Input area -->
     <div class="pt-3" style="border-top: 1px solid var(--border-subtle);">
+      <!-- Quick reply suggestions -->
+      <div class="flex gap-2 mb-2 overflow-x-auto pb-1">
+        <button
+          v-for="reply in quickReplies"
+          :key="reply.text"
+          @click="sendMessage(reply.text)"
+          :disabled="chatStore.sending"
+          class="px-3 py-1.5 text-xs rounded-full whitespace-nowrap transition-all flex items-center gap-1 flex-shrink-0"
+          :style="{
+            background: 'var(--bg-card)',
+            color: 'var(--text-secondary)',
+            border: `1px solid var(--border-subtle)`,
+          }"
+          @mouseenter="($event.target as HTMLElement).style.borderColor = moodTheme.palette.accent"
+          @mouseleave="($event.target as HTMLElement).style.borderColor = 'var(--border-subtle)'"
+        >
+          <span>{{ reply.icon }}</span>
+          <span>{{ reply.text }}</span>
+        </button>
+      </div>
+
       <form @submit.prevent="sendMessage()" class="flex gap-2">
         <input
           v-model="input"
           :disabled="chatStore.sending"
-          placeholder="在这里，慢慢说..."
+          :placeholder="inputPlaceholder"
           class="input-field flex-1 text-sm"
           autocomplete="off"
         />

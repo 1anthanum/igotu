@@ -8,15 +8,15 @@ const router = useRouter();
 const moodTheme = useMoodThemeStore();
 
 const QUESTIONS = [
-  '做事时提不起劲或没有兴趣',
-  '感到心情低落、沮丧或绝望',
-  '入睡困难、睡不安稳或睡眠过多',
-  '感觉疲倦或没有活力',
-  '食欲不振或吃太多',
-  '觉得自己很糟糕——或觉得自己很失败，或让自己或家人失望',
-  '对事物专注有困难，例如阅读报纸或看电视时',
-  '动作或说话速度缓慢到别人已经察觉？或正好相反——坐立不安、动来动去的情况比平常更多',
-  '有不如死掉或用某种方式伤害自己的念头',
+  { text: '做事时提不起劲或没有兴趣', emoji: '😶', short: '提不起劲' },
+  { text: '感到心情低落、沮丧或绝望', emoji: '😔', short: '心情低落' },
+  { text: '入睡困难、睡不安稳或睡眠过多', emoji: '🌙', short: '睡眠问题' },
+  { text: '感觉疲倦或没有活力', emoji: '🔋', short: '没有活力' },
+  { text: '食欲不振或吃太多', emoji: '🍽️', short: '食欲变化' },
+  { text: '觉得自己很糟糕——或觉得自己很失败，或让自己或家人失望', emoji: '💭', short: '自我否定' },
+  { text: '对事物专注有困难，例如阅读报纸或看电视时', emoji: '🔍', short: '难以专注' },
+  { text: '动作或说话速度缓慢到别人已经察觉？或正好相反——坐立不安、动来动去的情况比平常更多', emoji: '🐢', short: '行为变化' },
+  { text: '有不如死掉或用某种方式伤害自己的念头', emoji: '🆘', short: '自伤念头' },
 ];
 
 const OPTIONS = [
@@ -119,7 +119,10 @@ function getSeverityColor(s: string) {
     </button>
 
     <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">PHQ-9 自评</h1>
-    <p class="text-sm mb-6" style="color: var(--text-muted);">过去两周内，以下问题困扰你的频率是？</p>
+    <p class="text-sm mb-2" style="color: var(--text-muted);">过去两周内，以下问题困扰你的频率是？</p>
+    <p class="text-xs mb-6" style="color: var(--text-muted);">
+      {{ moodTheme.isLowEnergy ? '慢慢来，随时可以停下。' : '这不是考试，没有对错。' }}
+    </p>
 
     <!-- Result View -->
     <div v-if="isDone" class="space-y-4">
@@ -216,15 +219,20 @@ function getSeverityColor(s: string) {
           {{ opt }}
         </button>
       </div>
-      <button
-        @click="goBack"
-        class="text-sm transition-colors"
-        style="color: var(--text-muted);"
-        @mouseenter="($event.target as HTMLElement).style.color = 'var(--text-primary)'"
-        @mouseleave="($event.target as HTMLElement).style.color = 'var(--text-muted)'"
-      >
-        ← 上一题
-      </button>
+      <div class="flex items-center justify-between">
+        <button
+          @click="goBack"
+          class="text-sm transition-colors"
+          style="color: var(--text-muted);"
+          @mouseenter="($event.target as HTMLElement).style.color = 'var(--text-primary)'"
+          @mouseleave="($event.target as HTMLElement).style.color = 'var(--text-muted)'"
+        >
+          ← 上一题
+        </button>
+        <button @click="isDone = true" class="safe-exit-hint text-xs">
+          跳过这一题，直接看结果 →
+        </button>
+      </div>
     </div>
 
     <!-- Questions 0-8 -->
@@ -237,16 +245,46 @@ function getSeverityColor(s: string) {
         />
       </div>
 
-      <p class="text-lg font-medium animate-float-in" style="color: var(--text-primary);" :key="step">
-        {{ step + 1 }}. {{ QUESTIONS[step] }}
-      </p>
+      <!-- Emoji progress dots -->
+      <div class="flex justify-center gap-1.5 flex-wrap">
+        <span
+          v-for="(q, i) in QUESTIONS"
+          :key="i"
+          class="transition-all duration-300 cursor-default"
+          :style="{
+            fontSize: i === step ? '1.5rem' : '0.85rem',
+            opacity: i < step ? 0.4 : i === step ? 1 : 0.25,
+            filter: i === step ? `drop-shadow(0 0 6px ${moodTheme.palette.glow})` : 'none',
+          }"
+          :title="q.short"
+        >
+          {{ q.emoji }}
+        </span>
+      </div>
 
-      <div class="space-y-2">
+      <div class="animate-float-in" :key="step">
+        <div class="text-center mb-3">
+          <span class="text-3xl">{{ QUESTIONS[step].emoji }}</span>
+        </div>
+        <p
+          class="text-center font-medium"
+          :class="moodTheme.isLowEnergy ? 'text-base' : 'text-lg'"
+          style="color: var(--text-primary);"
+        >
+          {{ moodTheme.isLowEnergy ? QUESTIONS[step].short : QUESTIONS[step].text }}
+        </p>
+        <p v-if="moodTheme.isLowEnergy" class="text-xs text-center mt-1" style="color: var(--text-muted);">
+          {{ QUESTIONS[step].text }}
+        </p>
+      </div>
+
+      <div :class="moodTheme.isLowEnergy ? 'space-y-3' : 'space-y-2'">
         <button
           v-for="opt in OPTIONS"
           :key="opt.value"
           @click="selectOption(opt.value)"
-          class="w-full text-left card p-3 text-sm transition-all duration-200 flex justify-between items-center"
+          class="w-full text-left card text-sm transition-all duration-200 flex justify-between items-center"
+          :class="moodTheme.isLowEnergy ? 'p-4' : 'p-3'"
           style="color: var(--text-secondary);"
           @mouseenter="($event.target as HTMLElement).style.background = 'var(--mood-hover-bg)'"
           @mouseleave="($event.target as HTMLElement).style.background = ''"
@@ -256,16 +294,25 @@ function getSeverityColor(s: string) {
         </button>
       </div>
 
-      <button
-        v-if="step > 0"
-        @click="goBack"
-        class="text-sm transition-colors"
-        style="color: var(--text-muted);"
-        @mouseenter="($event.target as HTMLElement).style.color = 'var(--text-primary)'"
-        @mouseleave="($event.target as HTMLElement).style.color = 'var(--text-muted)'"
-      >
-        ← 上一题
-      </button>
+      <div class="flex items-center justify-between">
+        <button
+          v-if="step > 0"
+          @click="goBack"
+          class="text-sm transition-colors"
+          style="color: var(--text-muted);"
+          @mouseenter="($event.target as HTMLElement).style.color = 'var(--text-primary)'"
+          @mouseleave="($event.target as HTMLElement).style.color = 'var(--text-muted)'"
+        >
+          ← 上一题
+        </button>
+        <span v-else />
+        <button
+          @click="router.push('/toolbox')"
+          class="safe-exit-hint text-xs"
+        >
+          稍后再说 · 进度已保存 →
+        </button>
+      </div>
     </div>
   </div>
 </template>

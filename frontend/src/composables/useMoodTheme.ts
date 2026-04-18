@@ -38,6 +38,8 @@ interface MoodPalette {
   navActiveText: string;
   /** 光线条颜色（卡片顶部装饰线） */
   lightLine: string;
+  /** 舒适光晕（低情绪时的温暖包裹色） */
+  comfortGlow: string;
 }
 
 const PALETTES: Record<number, MoodPalette> = {
@@ -53,6 +55,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActive: 'rgba(139,92,246,0.15)',
     navActiveText: '#a78bfa',
     lightLine: 'rgba(139,92,246,0.25)',
+    comfortGlow: 'rgba(139,92,246,0.04)',
   },
   // 2 — 黎明前的微光（靛蓝）
   2: {
@@ -66,6 +69,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActive: 'rgba(99,102,241,0.15)',
     navActiveText: '#818cf8',
     lightLine: 'rgba(99,102,241,0.25)',
+    comfortGlow: 'rgba(99,102,241,0.03)',
   },
   // 3 — 安静的苔藓（青绿）
   3: {
@@ -79,6 +83,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActive: 'rgba(20,184,166,0.15)',
     navActiveText: '#2dd4bf',
     lightLine: 'rgba(20,184,166,0.25)',
+    comfortGlow: 'transparent',
   },
   // 4 — 新叶舒展（翠绿）
   4: {
@@ -92,6 +97,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActive: 'rgba(16,185,129,0.15)',
     navActiveText: '#34d399',
     lightLine: 'rgba(16,185,129,0.25)',
+    comfortGlow: 'transparent',
   },
   // 5 — 阳光穿过树冠（暖琥珀）
   5: {
@@ -105,6 +111,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActive: 'rgba(245,158,11,0.15)',
     navActiveText: '#fbbf24',
     lightLine: 'rgba(245,158,11,0.25)',
+    comfortGlow: 'transparent',
   },
 };
 
@@ -120,6 +127,16 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
   const currentMood = ref<number>(DEFAULT_MOOD);
 
   const palette = computed<MoodPalette>(() => PALETTES[currentMood.value] || PALETTES[DEFAULT_MOOD]);
+
+  /** 低能量模式：情绪 ≤ 2 时激活，界面自动简化 */
+  const isLowEnergy = computed(() => currentMood.value <= 2);
+
+  /** 动画速度倍率：低情绪时放慢动画 */
+  const animationSpeed = computed(() => {
+    if (currentMood.value === 1) return 0.5;
+    if (currentMood.value === 2) return 0.7;
+    return 1;
+  });
 
   function setMood(score: number) {
     const clamped = Math.max(1, Math.min(5, Math.round(score)));
@@ -155,6 +172,15 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
     root.style.setProperty('--mood-nav-active', p.navActive);
     root.style.setProperty('--mood-nav-active-text', p.navActiveText);
     root.style.setProperty('--mood-light-line', p.lightLine);
+    root.style.setProperty('--mood-comfort-glow', p.comfortGlow);
+    root.style.setProperty('--animation-speed', String(animationSpeed.value));
+
+    // Toggle low-energy class on body for global CSS adaptations
+    if (isLowEnergy.value) {
+      document.body.classList.add('low-energy');
+    } else {
+      document.body.classList.remove('low-energy');
+    }
   }
 
   function init() {
@@ -168,7 +194,7 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
   // Watch for changes
   watch(palette, () => applyToDOM());
 
-  return { currentMood, palette, setMood, setMoodSmooth, init };
+  return { currentMood, palette, isLowEnergy, animationSpeed, setMood, setMoodSmooth, init };
 });
 
 // ── 工具函数：情绪对应的 emoji 和标签 ──────────────────

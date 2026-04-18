@@ -2,6 +2,7 @@
 import { onMounted, computed } from 'vue';
 import { useAchievementStore } from '@/stores/achievements';
 import { useAnalyticsStore } from '@/stores/analytics';
+import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import EncouragementCard from '@/components/encouragement/EncouragementCard.vue';
 import AchievementCard from '@/components/achievements/AchievementCard.vue';
 import HeatmapCalendar from '@/components/visualization/HeatmapCalendar.vue';
@@ -9,6 +10,7 @@ import QuickLogButton from '@/components/achievements/QuickLogButton.vue';
 
 const achievements = useAchievementStore();
 const analytics = useAnalyticsStore();
+const moodTheme = useMoodThemeStore();
 
 const greeting = computed(() => {
   const h = new Date().getHours();
@@ -16,6 +18,37 @@ const greeting = computed(() => {
   if (h < 12) return '早上好';
   if (h < 18) return '下午好';
   return '晚上好';
+});
+
+/** 情绪感知主问候：低能量时无条件接纳，不追问状态 */
+const mainGreeting = computed(() => {
+  if (moodTheme.isLowEnergy) return '你来了就好。';
+  return '你今天还好吗？';
+});
+
+/** 自适应快捷工具 */
+const quickTools = computed(() => {
+  if (moodTheme.isLowEnergy) {
+    return [
+      { to: '/toolbox/breathing', icon: '🍃', label: '深呼吸' },
+      { to: '/chat', icon: '💭', label: '聊聊' },
+    ];
+  }
+  return [
+    { to: '/toolbox/breathing', icon: '🍃', label: '呼吸空间' },
+    { to: '/chat', icon: '💭', label: '和伙伴聊聊' },
+    { to: '/mood', icon: '🌿', label: '记录感受' },
+  ];
+});
+
+const emptyHint = computed(() => {
+  if (moodTheme.isLowEnergy) return '什么都不做也可以';
+  return '点击右下角的 ✨ 种下第一颗种子';
+});
+
+const emptySubHint = computed(() => {
+  if (moodTheme.isLowEnergy) return '你在这里就够了';
+  return '每一个微小的行动都在让你的花园生长';
 });
 
 onMounted(async () => {
@@ -39,26 +72,27 @@ async function handleDelete(id: string) {
     <div class="mood-gradient-bg rounded-2xl px-6 py-5 animate-float-in">
       <p class="text-xs mb-1" style="color: var(--text-muted);">{{ greeting }}</p>
       <h1 class="text-xl font-medium" style="color: var(--text-primary);">
-        你今天还好吗？
+        {{ mainGreeting }}
       </h1>
     </div>
 
     <!-- Bio divider -->
     <div class="bio-divider" />
 
-    <!-- Quick tools -->
-    <div class="grid grid-cols-3 gap-3 animate-float-in" style="animation-delay: 0.1s;">
+    <!-- Quick tools (adaptive) -->
+    <div
+      class="grid gap-3 animate-float-in"
+      :class="moodTheme.isLowEnergy ? 'grid-cols-2' : 'grid-cols-3'"
+      style="animation-delay: 0.1s;"
+    >
       <router-link
-        v-for="tool in [
-          { to: '/toolbox/breathing', icon: '🍃', label: '呼吸空间' },
-          { to: '/chat', icon: '💭', label: '和伙伴聊聊' },
-          { to: '/mood', icon: '🌿', label: '记录感受' },
-        ]"
+        v-for="tool in quickTools"
         :key="tool.to"
         :to="tool.to"
-        class="card flex flex-col items-center gap-2 py-4 text-center cursor-pointer"
+        class="card flex flex-col items-center gap-2 text-center cursor-pointer"
+        :class="moodTheme.isLowEnergy ? 'py-5' : 'py-4'"
       >
-        <span class="text-xl">{{ tool.icon }}</span>
+        <span :class="moodTheme.isLowEnergy ? 'text-2xl' : 'text-xl'">{{ tool.icon }}</span>
         <span class="text-xs" style="color: var(--text-secondary);">{{ tool.label }}</span>
       </router-link>
     </div>
@@ -89,10 +123,10 @@ async function handleDelete(id: string) {
       <div v-else class="text-center py-8">
         <div class="text-3xl mb-2">🌱</div>
         <p class="text-sm" style="color: var(--text-secondary);">
-          点击右下角的 ✨ 种下第一颗种子
+          {{ emptyHint }}
         </p>
         <p class="text-xs mt-1" style="color: var(--text-muted);">
-          每一个微小的行动都在让你的花园生长
+          {{ emptySubHint }}
         </p>
       </div>
     </div>

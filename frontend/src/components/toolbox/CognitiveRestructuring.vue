@@ -110,7 +110,13 @@ function getStepData(i: number): string {
     </button>
 
     <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">想法检验</h1>
-    <p class="text-sm mb-6" style="color: var(--text-secondary);">用认知行为疗法的方法，检验你脑海中的想法</p>
+    <p class="text-sm mb-2" style="color: var(--text-secondary);">
+      {{ moodTheme.isLowEnergy ? '一步一步来，不用急' : '用认知行为疗法的方法，检验你脑海中的想法' }}
+    </p>
+    <p v-if="moodTheme.isLowEnergy" class="text-xs mb-6" style="color: var(--text-muted);">
+      写多写少都可以，写不出来也没关系
+    </p>
+    <p v-else class="mb-6" />
 
     <!-- Complete -->
     <div v-if="isDone" class="space-y-4 animate-float-in">
@@ -181,12 +187,13 @@ function getStepData(i: number): string {
       <div v-else-if="step === 1" class="animate-float-in" :key="'s1'">
         <h2 class="text-base font-medium mb-2" style="color: var(--text-primary);">第2步：识别情绪</h2>
         <p class="text-sm mb-3" style="color: var(--text-secondary);">这个想法带来了什么情绪？（可以多选）</p>
-        <div class="grid grid-cols-3 gap-2 mb-4">
+        <div :class="moodTheme.isLowEnergy ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-3 gap-2'" class="mb-4">
           <button
             v-for="e in EMOTIONS"
             :key="e"
             @click="toggleEmotion(e)"
-            class="px-3 py-2 rounded-xl text-sm transition-all"
+            :class="moodTheme.isLowEnergy ? 'px-4 py-3 rounded-xl text-base' : 'px-3 py-2 rounded-xl text-sm'"
+            class="transition-all"
             :style="selectedEmotions.includes(e)
               ? { background: moodTheme.palette.navActive, color: moodTheme.palette.navActiveText, border: `1px solid ${moodTheme.palette.accent}60` }
               : { background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }"
@@ -260,6 +267,13 @@ function getStepData(i: number): string {
           {{ step < 5 ? '下一步 →' : '完成检验' }}
         </button>
       </div>
+
+      <button
+        @click="router.push('/toolbox')"
+        class="safe-exit-hint"
+      >
+        先到这里 · 随时可以回来 →
+      </button>
     </div>
   </div>
 </template>

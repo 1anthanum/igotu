@@ -85,10 +85,12 @@ export class ChatService {
       [sessionId]
     );
 
-    const messages = history.rows.map((m: any) => ({
+    // Limit context window to last 50 messages to prevent memory issues
+    const allMessages = history.rows.map((m: any) => ({
       role: m.role as 'user' | 'assistant',
       content: m.content,
     }));
+    const messages = allMessages.slice(-50);
 
     let assistantText: string;
     let moodScore: number | null = null;
@@ -98,16 +100,31 @@ export class ChatService {
       // ── Online mode: Claude API ──
       const systemPrompt = buildSystemPrompt();
 
-      const response = await anthropic.messages.create({
-        model: env.ANTHROPIC_MODEL,
-        max_tokens: env.ANTHROPIC_MAX_TOKENS,
-        system: systemPrompt,
-        messages,
-      });
+      // Timeout protection: abort if Claude API takes > 30s
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 30_000);
 
-      assistantText = response.content[0].type === 'text'
-        ? response.content[0].text
-        : '';
+      try {
+        const response = await anthropic.messages.create({
+          model: env.ANTHROPIC_MODEL,
+          max_tokens: env.ANTHROPIC_MAX_TOKENS,
+          system: systemPrompt,
+          messages,
+        }, { signal: controller.signal as any });
+
+        assistantText = response.content[0].type === 'text'
+          ? response.content[0].text
+          : '';
+      } catch (apiErr: any) {
+        if (apiErr.name === 'AbortError' || apiErr.message?.includes('abort')) {
+          console.warn('[ChatService] Claude API call timed out after 30s');
+          assistantText = '抱歉，我现在有点慢，请稍后再试一次。';
+        } else {
+          throw apiErr;
+        }
+      } finally {
+        clearTimeout(timeout);
+      }
     } else {
       // ── Offline mode: rule-based fallback ──
       const isFirstMessage = messages.length <= 1; // only the user's message just sent

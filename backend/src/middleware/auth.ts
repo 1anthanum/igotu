@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyToken, JwtPayload } from '../config/jwt';
+import { isTokenRevoked, isUserTokenRevoked } from './tokenBlacklist';
 
 // Extend Express Request to include user
 declare global {
@@ -26,6 +27,19 @@ export function authenticate(req: Request, res: Response, next: NextFunction): v
       res.status(401).json({ error: '无效的令牌类型' });
       return;
     }
+
+    // Check if this specific token has been revoked (logout)
+    if (decoded.jti && isTokenRevoked(decoded.jti)) {
+      res.status(401).json({ error: '令牌已被注销' });
+      return;
+    }
+
+    // Check if all tokens for this user were revoked (force logout)
+    if (decoded.iat && isUserTokenRevoked(decoded.sub, decoded.iat)) {
+      res.status(401).json({ error: '令牌已被注销' });
+      return;
+    }
+
     req.user = decoded;
     next();
   } catch (error) {

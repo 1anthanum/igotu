@@ -63,7 +63,9 @@ function restart() {
     </button>
 
     <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">扎根练习 5-4-3-2-1</h1>
-    <p class="text-sm mb-6" style="color: var(--text-secondary);">用五感把自己拉回当下</p>
+    <p class="text-sm mb-6" style="color: var(--text-secondary);">
+      {{ moodTheme.isLowEnergy ? '不用想太多，感受就好' : '用五感把自己拉回当下' }}
+    </p>
 
     <!-- Complete -->
     <div v-if="isDone" class="text-center py-8 space-y-4 animate-float-in">
@@ -143,19 +145,37 @@ function restart() {
         <p class="text-sm mt-1" style="color: var(--text-secondary);">{{ currentStep.prompt }}</p>
       </div>
 
-      <textarea
-        v-model="inputs[step]"
-        :placeholder="`写下你${currentStep.sense}的${currentStep.n}样东西...`"
-        class="input-field w-full text-sm resize-none"
-        rows="4"
-      />
+      <!-- Optional text input with skip option -->
+      <div class="space-y-2">
+        <textarea
+          v-model="inputs[step]"
+          :placeholder="moodTheme.isLowEnergy
+            ? `想写就写，不写也可以…`
+            : `写下你${currentStep.sense}的${currentStep.n}样东西...`"
+          class="input-field w-full text-sm resize-none"
+          :rows="moodTheme.isLowEnergy ? 2 : 4"
+        />
+        <p v-if="moodTheme.isLowEnergy" class="text-xs text-center" style="color: var(--text-muted);">
+          不想打字？在心里默念也一样有效
+        </p>
+      </div>
 
       <div class="flex gap-3">
         <button v-if="step > 0" @click="prev" class="btn-secondary flex-1">← 上一步</button>
         <button @click="next" class="btn-primary flex-1">
-          {{ step < 4 ? '下一步 →' : '完成' }}
+          {{ step < 4
+            ? (inputs[step]?.trim() ? '下一步 →' : '跳过文字，下一步 →')
+            : '完成'
+          }}
         </button>
       </div>
+
+      <button
+        @click="router.push('/toolbox')"
+        class="safe-exit-hint"
+      >
+        先到这里 · 随时可以回来 →
+      </button>
     </div>
   </div>
 </template>

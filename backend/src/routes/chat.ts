@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth';
+import { chatLimiter } from '../middleware/rateLimit';
 import { ChatService } from '../services/ChatService';
 
 const router = Router();
@@ -37,12 +38,15 @@ router.get('/sessions/:id/messages', authenticate, async (req: Request, res: Res
   }
 });
 
-// POST /api/chat/sessions/:id/messages — Send a message
-router.post('/sessions/:id/messages', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+// POST /api/chat/sessions/:id/messages — Send a message (rate limited per user)
+router.post('/sessions/:id/messages', authenticate, chatLimiter, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { content } = req.body;
     if (!content || typeof content !== 'string') {
       return res.status(400).json({ error: 'content is required' });
+    }
+    if (content.length > 5000) {
+      return res.status(400).json({ error: '消息过长，请控制在5000字以内' });
     }
 
     const result = await ChatService.sendMessage(req.params.id, req.user!.sub, content);
