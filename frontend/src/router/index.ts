@@ -1,6 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 
+/** Demo 模式允许访问的路由名称 */
+const DEMO_ALLOWED_ROUTES = new Set([
+  'home', 'demo', 'toolbox', 'toolbox-breathing', 'toolbox-grounding', 'toolbox-crisis-prep',
+]);
+
 const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -47,6 +52,12 @@ const router = createRouter({
       meta: { requiresAuth: true },
     },
     {
+      path: '/toolbox/crisis-prep',
+      name: 'toolbox-crisis-prep',
+      component: () => import('@/components/toolbox/CrisisPrep.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
       path: '/mood',
       name: 'mood',
       component: () => import('@/views/MoodView.vue'),
@@ -56,6 +67,12 @@ const router = createRouter({
       path: '/analytics',
       name: 'analytics',
       component: () => import('@/views/AnalyticsView.vue'),
+      meta: { requiresAuth: true },
+    },
+    {
+      path: '/therapy',
+      name: 'therapy',
+      component: () => import('@/components/therapy/TherapyBridge.vue'),
       meta: { requiresAuth: true },
     },
     {
@@ -70,6 +87,11 @@ const router = createRouter({
       component: () => import('@/views/LoginView.vue'),
     },
     {
+      path: '/demo',
+      name: 'demo',
+      component: () => import('@/views/DemoLanding.vue'),
+    },
+    {
       path: '/:pathMatch(.*)*',
       redirect: '/',
     },
@@ -78,9 +100,18 @@ const router = createRouter({
 
 router.beforeEach((to) => {
   const auth = useAuthStore();
+
+  // Unauthenticated user trying to access protected route
   if (to.meta.requiresAuth && !auth.isAuthenticated) {
     return { name: 'login' };
   }
+
+  // Demo mode: restrict to allowed routes only
+  if (auth.isDemo && to.name && !DEMO_ALLOWED_ROUTES.has(to.name as string)) {
+    return { name: 'home' };
+  }
+
+  // Authenticated user on login page → redirect home
   if (to.name === 'login' && auth.isAuthenticated) {
     return { name: 'home' };
   }

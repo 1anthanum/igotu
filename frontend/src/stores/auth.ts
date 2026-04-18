@@ -6,8 +6,17 @@ import type { User } from '@/types/user';
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null);
   const accessToken = ref<string | null>(localStorage.getItem('access_token'));
+  const isDemo = ref(false);
 
-  const isAuthenticated = computed(() => !!accessToken.value);
+  const isAuthenticated = computed(() => !!accessToken.value || isDemo.value);
+
+  function enterDemo() {
+    isDemo.value = true;
+  }
+
+  function exitDemo() {
+    isDemo.value = false;
+  }
 
   async function register(email: string, username: string, password: string) {
     const result = await authApi.register(email, username, password);
@@ -32,5 +41,5 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('refresh_token');
   }
 
-  return { user, accessToken, isAuthenticated, register, login, logout };
+  return { user, accessToken, isAuthenticated, isDemo, register, login, logout, enterDemo, exitDemo };
 });

@@ -40,6 +40,8 @@ interface MoodPalette {
   lightLine: string;
   /** 舒适光晕（低情绪时的温暖包裹色） */
   comfortGlow: string;
+  /** 光效强度（0-1，用于粒子/卡片发光的全局倍率） */
+  glowIntensity: number;
 }
 
 const PALETTES: Record<number, MoodPalette> = {
@@ -56,6 +58,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActiveText: '#a78bfa',
     lightLine: 'rgba(139,92,246,0.25)',
     comfortGlow: 'rgba(139,92,246,0.04)',
+    glowIntensity: 0.3,
   },
   // 2 — 黎明前的微光（靛蓝）
   2: {
@@ -70,6 +73,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActiveText: '#818cf8',
     lightLine: 'rgba(99,102,241,0.25)',
     comfortGlow: 'rgba(99,102,241,0.03)',
+    glowIntensity: 0.5,
   },
   // 3 — 安静的苔藓（青绿）
   3: {
@@ -84,6 +88,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActiveText: '#2dd4bf',
     lightLine: 'rgba(20,184,166,0.25)',
     comfortGlow: 'transparent',
+    glowIntensity: 0.6,
   },
   // 4 — 新叶舒展（翠绿）
   4: {
@@ -98,6 +103,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActiveText: '#34d399',
     lightLine: 'rgba(16,185,129,0.25)',
     comfortGlow: 'transparent',
+    glowIntensity: 0.8,
   },
   // 5 — 阳光穿过树冠（暖琥珀）
   5: {
@@ -112,6 +118,7 @@ const PALETTES: Record<number, MoodPalette> = {
     navActiveText: '#fbbf24',
     lightLine: 'rgba(245,158,11,0.25)',
     comfortGlow: 'transparent',
+    glowIntensity: 1.0,
   },
 };
 
@@ -173,6 +180,7 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
     root.style.setProperty('--mood-nav-active-text', p.navActiveText);
     root.style.setProperty('--mood-light-line', p.lightLine);
     root.style.setProperty('--mood-comfort-glow', p.comfortGlow);
+    root.style.setProperty('--glow-intensity', String(p.glowIntensity));
     root.style.setProperty('--animation-speed', String(animationSpeed.value));
 
     // Toggle low-energy class on body for global CSS adaptations
@@ -194,7 +202,10 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
   // Watch for changes
   watch(palette, () => applyToDOM());
 
-  return { currentMood, palette, isLowEnergy, animationSpeed, setMood, setMoodSmooth, init };
+  /** 只读情绪分数（供外部组件读取） */
+  const moodScore = computed(() => currentMood.value);
+
+  return { currentMood, moodScore, palette, isLowEnergy, animationSpeed, setMood, setMoodSmooth, init };
 });
 
 // ── 工具函数：情绪对应的 emoji 和标签 ──────────────────

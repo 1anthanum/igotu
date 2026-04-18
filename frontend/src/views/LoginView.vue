@@ -96,6 +96,11 @@ async function handleSubmit() {
         </form>
       </div>
 
+      <!-- Demo link -->
+      <router-link to="/demo" class="demo-link">
+        或者，先体验一下 →
+      </router-link>
+
       <p class="footer-note">你的数据只属于你自己</p>
     </div>
   </div>
@@ -237,6 +242,18 @@ async function handleSubmit() {
   0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
   40% { opacity: 1; transform: scale(1.2); }
 }
+
+/* ── Demo link ── */
+.demo-link {
+  display: block;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.demo-link:hover { color: var(--mood-accent); }
 
 /* ── Footer ── */
 .footer-note {

@@ -40,6 +40,7 @@
   /* 自适应系统（运行时由 JS 覆盖） */
   --mood-comfort-glow: transparent;
   --animation-speed: 1;
+  --glow-intensity: 0.6;
 }
 
 @layer base {
@@ -78,6 +79,10 @@
   .card:hover {
     border-color: var(--border-medium);
     box-shadow: 0 0 40px var(--mood-glow);
+    animation: shimmer-card 2s ease-in-out;
+  }
+  .card:hover::before {
+    animation: glow-breathe 3s ease-in-out infinite;
   }
 
   /* ── 发光卡片 ────────────────────── */
@@ -264,10 +269,10 @@
 
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
-.page-enter-from { opacity: 0; transform: translateY(12px); }
-.page-leave-to { opacity: 0; transform: translateY(-8px); }
+.page-enter-from { opacity: 0; transform: translateY(12px) scale(0.98); }
+.page-leave-to { opacity: 0; transform: translateY(-8px) scale(0.99); }
 
 @keyframes pulse-glow {
   0%, 100% { box-shadow: 0 0 20px var(--mood-glow); }
@@ -310,6 +315,41 @@
   30% { opacity: 1; transform: translateY(-4px); }
 }
 
+/* ── 卡片微光扫过 ── */
+@keyframes shimmer-card {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.card:hover {
+  background-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--mood-accent) calc(4% * var(--glow-intensity)), transparent) 50%,
+    transparent 100%
+  );
+  background-size: 200% 100%;
+}
+
+/* ── 卡片顶部光线呼吸 ── */
+@keyframes glow-breathe {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: calc(0.6 * var(--glow-intensity)); }
+}
+
+/* ── 节点绽放（成长树用） ── */
+@keyframes bloom-grow {
+  0% { transform: scale(0); opacity: 0; }
+  60% { transform: scale(1.2); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* ── 里程碑火花 ── */
+@keyframes spark-burst {
+  0% { transform: scale(0); opacity: 1; }
+  50% { transform: scale(2); opacity: 0.6; }
+  100% { transform: scale(3); opacity: 0; }
+}
+
 /* ══════════════════════════════════════════════════
    低能量模式 — 情绪 ≤ 2 时自动激活
    减速动画 · 放大触摸目标 · 柔化对比度 · 舒适光晕
@@ -332,6 +372,10 @@ body.low-energy .animate-float-in { animation-duration: 0.8s; }
 body.low-energy .page-enter-active,
 body.low-energy .page-leave-active { transition-duration: 0.4s; }
 body.low-energy .animate-pulse-glow { animation-duration: 6s; }
+
+/* ── 卡片shimmer禁用 ── */
+body.low-energy .card:hover { animation: none; background-image: none; }
+body.low-energy .card:hover::before { animation: none; }
 
 /* ── 触摸目标放大 ── */
 body.low-energy .btn-primary { min-height: 52px; }

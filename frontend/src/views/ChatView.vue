@@ -2,25 +2,55 @@
 import { ref, computed, nextTick, onMounted, watch } from 'vue';
 import { useChatStore } from '@/stores/chat';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
+import { useOpeningPreference } from '@/composables/useOpeningPreference';
 import ChatMessage from '@/components/chat/ChatMessage.vue';
+import GrowthTree from '@/components/tree/GrowthTree.vue';
+import GuideTooltip from '@/components/onboarding/GuideTooltip.vue';
 
 const chatStore = useChatStore();
 const moodTheme = useMoodThemeStore();
+const openingPref = useOpeningPreference();
 const input = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
+const showTree = ref(false);
 
-const OPENING_MESSAGE = '你来了。今天的状态，更接近哪一个？';
-const OPENING_CHOICES = [
-  { key: 'A', text: '脑子里很吵，停不下来' },
-  { key: 'B', text: '什么都不想做，很空' },
-  { key: 'C', text: '有具体的事情让我难受' },
-  { key: 'D', text: '说不清楚，就是不好' },
-  { key: 'E', text: '还行，就是想聊聊' },
+/**
+ * 开场建议标签（非强制，仅供参考）
+ * 低能量模式显示更少更简的标签
+ */
+const SUGGESTION_TAGS = [
+  { key: 'A', text: '脑子里很吵', icon: '🌀' },
+  { key: 'B', text: '什么都不想做', icon: '🫥' },
+  { key: 'C', text: '有件事让我难受', icon: '💔' },
+  { key: 'D', text: '说不清楚', icon: '🌫️' },
+  { key: 'E', text: '还行，聊聊', icon: '💬' },
 ];
 
 const showOpening = ref(false);
 
-/** 情绪自适应快捷回复 */
+/** 根据情绪和偏好计算显示哪些建议标签 */
+const openingSuggestions = computed(() => {
+  if (moodTheme.isLowEnergy) {
+    return [
+      { key: 'low1', text: '嗯', icon: '💬' },
+      { key: 'low2', text: '陪着我', icon: '🫂' },
+    ];
+  }
+  // 如果用户上次选过某个标签，把它排到第一位
+  const lastKey = openingPref.lastChoice.value;
+  if (lastKey) {
+    const sorted = [...SUGGESTION_TAGS];
+    const idx = sorted.findIndex(t => t.key === lastKey);
+    if (idx > 0) {
+      const [item] = sorted.splice(idx, 1);
+      sorted.unshift(item);
+    }
+    return sorted;
+  }
+  return SUGGESTION_TAGS;
+});
+
+/** 情绪自适应快捷回复（对话进行中时显示） */
 const quickReplies = computed(() => {
   if (moodTheme.isLowEnergy) {
     return [
@@ -37,7 +67,17 @@ const quickReplies = computed(() => {
   ];
 });
 
+/** 开场欢迎语 */
+const openingGreeting = computed(() => {
+  if (moodTheme.isLowEnergy) return '你来了就好。';
+  if (openingPref.hasPreference.value) return '又见面了。想聊什么都可以。';
+  return '你好。想聊什么，或者什么都不说也可以。';
+});
+
 const inputPlaceholder = computed(() => {
+  if (showOpening.value && chatStore.messages.length === 0) {
+    return moodTheme.isLowEnergy ? '想说什么就说…' : '直接打字，或者点下面的标签…';
+  }
   if (moodTheme.isLowEnergy) return '打字或者点上面的…';
   return '在这里，慢慢说...';
 });
@@ -52,7 +92,7 @@ onMounted(async () => {
 });
 
 async function startNewChat() {
-  const session = await chatStore.startNewSession();
+  await chatStore.startNewSession();
   showOpening.value = true;
 }
 
@@ -65,17 +105,28 @@ async function sendMessage(text?: string) {
       await chatStore.startNewSession();
     }
     showOpening.value = false;
+
+    // 记忆用户偏好
+    const matchedTag = SUGGESTION_TAGS.find(t => t.text === content);
+    if (matchedTag) {
+      openingPref.setChoice(matchedTag.key);
+    } else {
+      openingPref.setFreetext();
+    }
   }
 
   input.value = '';
   const response = await chatStore.sendMessage(content);
 
-  // AI 情绪联动：如果后端返回了 mood_score，平滑更新主题
   if (response && typeof response === 'object' && 'mood_score' in response) {
     moodTheme.setMoodSmooth((response as any).mood_score);
   }
 
   scrollToBottom();
+}
+
+function selectSuggestion(tag: { key: string; text: string }) {
+  sendMessage(tag.text);
 }
 
 function scrollToBottom() {
@@ -117,17 +168,38 @@ async function loadSession(sessionId: string) {
           </div>
         </div>
       </div>
-      <button
-        @click="startNewChat"
-        class="text-sm transition-colors"
-        :style="{ color: moodTheme.palette.accent }"
-      >
-        + 新对话
-      </button>
+      <div class="flex items-center gap-3">
+        <button
+          id="btn-tree-toggle"
+          @click="showTree = !showTree"
+          class="text-lg transition-all"
+          :style="{ opacity: showTree ? 1 : 0.5, transform: showTree ? 'scale(1.1)' : 'scale(1)' }"
+          title="成长树"
+        >
+          🌳
+        </button>
+        <button
+          v-if="!showTree"
+          @click="startNewChat"
+          class="text-sm transition-colors"
+          :style="{ color: moodTheme.palette.accent }"
+        >
+          + 新对话
+        </button>
+      </div>
     </div>
 
-    <!-- Session list -->
-    <div v-if="chatStore.sessions.length > 1" class="mb-3">
+    <!-- Growth Tree panel (overlay) -->
+    <div v-if="showTree" class="mb-3">
+      <GrowthTree
+        @select-session="(id: string) => { loadSession(id); showTree = false; }"
+        @new-chat="() => { startNewChat(); showTree = false; }"
+        @close="showTree = false"
+      />
+    </div>
+
+    <!-- Session list (only when tree is hidden) -->
+    <div v-else-if="chatStore.sessions.length > 1" class="mb-3">
       <div class="flex gap-2 overflow-x-auto pb-1">
         <button
           v-for="session in chatStore.sessions.slice(0, 5)"
@@ -145,14 +217,36 @@ async function loadSession(sessionId: string) {
 
     <!-- Messages area -->
     <div ref="messagesContainer" class="flex-1 overflow-y-auto space-y-1 pb-4">
-      <!-- Opening message -->
-      <div v-if="showOpening && chatStore.messages.length === 0">
-        <ChatMessage
-          role="assistant"
-          :content="OPENING_MESSAGE + '\n\n```choices\n' + OPENING_CHOICES.map(c => c.key + '. ' + c.text).join('\n') + '\n```'"
-          :is-last="true"
-          @select-choice="sendMessage($event)"
-        />
+      <!-- Gentle opening (non-pressuring) -->
+      <div v-if="showOpening && chatStore.messages.length === 0" class="py-8 animate-float-in">
+        <div class="text-center mb-6">
+          <div
+            class="w-16 h-16 rounded-full mx-auto flex items-center justify-center mb-3"
+            :style="{ background: moodTheme.palette.accentSoft, boxShadow: `0 0 40px ${moodTheme.palette.glow}` }"
+          >
+            <span class="text-2xl">🌱</span>
+          </div>
+          <p class="text-base" style="color: var(--text-primary);">{{ openingGreeting }}</p>
+          <p v-if="!moodTheme.isLowEnergy" class="text-xs mt-1" style="color: var(--text-muted);">
+            可以选下面的标签，也可以直接打字
+          </p>
+        </div>
+
+        <!-- Suggestion tags (not forced choices) -->
+        <div class="flex flex-wrap justify-center gap-2">
+          <button
+            v-for="tag in openingSuggestions"
+            :key="tag.key"
+            @click="selectSuggestion(tag)"
+            class="px-4 py-2 rounded-full text-sm transition-all flex items-center gap-1.5"
+            style="background: var(--bg-card); color: var(--text-secondary); border: 1px solid var(--border-subtle);"
+            @mouseenter="($event.target as HTMLElement).style.borderColor = moodTheme.palette.accent"
+            @mouseleave="($event.target as HTMLElement).style.borderColor = 'var(--border-subtle)'"
+          >
+            <span>{{ tag.icon }}</span>
+            <span>{{ tag.text }}</span>
+          </button>
+        </div>
       </div>
 
       <!-- Chat messages -->
@@ -194,8 +288,8 @@ async function loadSession(sessionId: string) {
 
     <!-- Input area -->
     <div class="pt-3" style="border-top: 1px solid var(--border-subtle);">
-      <!-- Quick reply suggestions -->
-      <div class="flex gap-2 mb-2 overflow-x-auto pb-1">
+      <!-- Quick reply suggestions (only when conversation is active) -->
+      <div v-if="chatStore.messages.length > 0" class="flex gap-2 mb-2 overflow-x-auto pb-1">
         <button
           v-for="reply in quickReplies"
           :key="reply.text"
@@ -235,6 +329,15 @@ async function loadSession(sessionId: string) {
         AI 对话不替代专业医疗。如需紧急帮助，请拨打 400-161-9995
       </p>
     </div>
+
+    <!-- Onboarding tooltips -->
+    <GuideTooltip
+      tip-id="chat-tree"
+      title="成长树"
+      description="你的每次对话都会成为树上的一个节点，记录你的成长。"
+      target-selector="#btn-tree-toggle"
+      position="bottom"
+    />
   </div>
 </template>
 

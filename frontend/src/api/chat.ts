@@ -36,6 +36,11 @@ export async function sendMessage(sessionId: string, content: string) {
   return res.data as { role: 'assistant'; content: string };
 }
 
+export async function renameSession(sessionId: string, title: string) {
+  const res = await apiClient.patch(`/chat/sessions/${sessionId}`, { title });
+  return res.data as ChatSession;
+}
+
 export async function deleteSession(sessionId: string) {
   await apiClient.delete(`/chat/sessions/${sessionId}`);
 }

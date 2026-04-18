@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
+import GuideTooltip from '@/components/onboarding/GuideTooltip.vue';
 
 const router = useRouter();
 const moodTheme = useMoodThemeStore();
@@ -12,6 +13,7 @@ const tools = computed(() => {
     { icon: '🌬️', name: '呼吸引导', desc: '三种呼吸技巧，帮助你缓解焦虑', shortDesc: '跟着圆圈呼吸就好', route: '/toolbox/breathing', lowEnergyFirst: true },
     { icon: '🌍', name: '扎根练习 5-4-3-2-1', desc: '用五感把自己拉回当下', shortDesc: '用五感回到当下', route: '/toolbox/grounding', lowEnergyFirst: false },
     { icon: '🔍', name: '想法检验', desc: '认知行为疗法：检验自动化消极想法', shortDesc: '检验消极想法', route: '/toolbox/cognitive', lowEnergyFirst: false },
+    { icon: '📞', name: '988 电话准备', desc: '整理你的感受和症状，降低求助焦虑', shortDesc: '帮你准备好打电话', route: '/toolbox/crisis-prep', lowEnergyFirst: false, isCrisis: true },
   ];
 
   if (moodTheme.isLowEnergy) {
@@ -46,7 +48,7 @@ function getToolDesc(tool: typeof tools.value[number]) {
       什么都不想做？也可以只是待在这里。
     </div>
 
-    <div class="space-y-3">
+    <div id="toolbox-list" class="space-y-3">
       <button
         v-for="(tool, i) in tools"
         :key="tool.route"
@@ -91,5 +93,13 @@ function getToolDesc(tool: typeof tools.value[number]) {
         }}
       </p>
     </div>
+    <!-- Onboarding tooltip -->
+    <GuideTooltip
+      tip-id="toolbox-breathing"
+      title="推荐从这里开始"
+      description="呼吸练习是最简单的自助方式，随时可以用。"
+      target-selector="#toolbox-list"
+      position="top"
+    />
   </div>
 </template>

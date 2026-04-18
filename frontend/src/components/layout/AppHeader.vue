@@ -14,6 +14,7 @@ const NAV_ITEMS = [
   { to: '/toolbox', name: 'toolbox', label: '工具箱', icon: '🧰', prefix: '/toolbox' },
   { to: '/mood', name: 'mood', label: '情绪', icon: '🌿' },
   { to: '/analytics', name: 'analytics', label: '分析', icon: '📊' },
+  { to: '/therapy', name: 'therapy', label: '桥梁', icon: '🌉' },
   { to: '/settings', name: 'settings', label: '设置', icon: '⚙️' },
 ];
 

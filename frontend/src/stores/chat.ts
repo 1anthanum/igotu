@@ -5,6 +5,7 @@ import {
   getSessions,
   getMessages,
   sendMessage as apiSendMessage,
+  renameSession as apiRenameSession,
   deleteSession,
   type ChatSession,
   type ChatMessage,
@@ -80,6 +81,13 @@ export const useChatStore = defineStore('chat', () => {
     }
   }
 
+  async function renameSession(sessionId: string, title: string) {
+    const updated = await apiRenameSession(sessionId, title);
+    const idx = sessions.value.findIndex(s => s.id === sessionId);
+    if (idx >= 0) sessions.value[idx] = { ...sessions.value[idx], title: updated.title };
+    return updated;
+  }
+
   async function removeSession(sessionId: string) {
     await deleteSession(sessionId);
     sessions.value = sessions.value.filter(s => s.id !== sessionId);
@@ -91,6 +99,6 @@ export const useChatStore = defineStore('chat', () => {
 
   return {
     sessions, currentSessionId, messages, sending, loading,
-    fetchSessions, startNewSession, loadSession, sendMessage, removeSession,
+    fetchSessions, startNewSession, loadSession, sendMessage, renameSession, removeSession,
   };
 });

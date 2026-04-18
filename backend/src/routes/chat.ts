@@ -63,6 +63,26 @@ router.post('/sessions/:id/messages', authenticate, chatLimiter, async (req: Req
   }
 });
 
+// PATCH /api/chat/sessions/:id — Rename a session
+router.patch('/sessions/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { title } = req.body;
+    if (!title || typeof title !== 'string') {
+      return res.status(400).json({ error: 'title is required' });
+    }
+    if (title.length > 50) {
+      return res.status(400).json({ error: '标题过长，请控制在50字以内' });
+    }
+    const updated = ChatService.renameSession(req.params.id, req.user!.sub, title);
+    if (!updated) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+    res.json(updated);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // DELETE /api/chat/sessions/:id — Delete a session
 router.delete('/sessions/:id', authenticate, async (req: Request, res: Response, next: NextFunction) => {
   try {

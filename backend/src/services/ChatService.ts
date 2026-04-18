@@ -77,6 +77,16 @@ export class ChatService {
       [uuidv4(), sessionId, userId, userMessage]
     );
 
+    // Auto-title: if this is the first user message, use its content as the session title
+    const userMsgCount = query(
+      `SELECT COUNT(*) as cnt FROM chat_messages WHERE session_id = ? AND role = 'user'`,
+      [sessionId]
+    );
+    if (userMsgCount.rows[0]?.cnt === 1) {
+      const autoTitle = userMessage.slice(0, 15).replace(/\n/g, ' ').trim() || '新对话';
+      query('UPDATE chat_sessions SET title = ? WHERE id = ?', [autoTitle, sessionId]);
+    }
+
     // Get conversation history
     const history = query(
       `SELECT role, content FROM chat_messages
@@ -158,6 +168,22 @@ export class ChatService {
     );
 
     return { text: assistantText, mood_score: moodScore };
+  }
+
+  // Rename a session
+  static renameSession(sessionId: string, userId: string, title: string) {
+    const session = query(
+      'SELECT id FROM chat_sessions WHERE id = ? AND user_id = ?',
+      [sessionId, userId]
+    );
+    if (session.rows.length === 0) return null;
+
+    query(
+      'UPDATE chat_sessions SET title = ? WHERE id = ?',
+      [title.slice(0, 50), sessionId]
+    );
+    const updated = query('SELECT * FROM chat_sessions WHERE id = ?', [sessionId]);
+    return updated.rows[0];
   }
 
   // Delete a session
