@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
+import { useI18n } from '@/i18n';
 import {
   createSession,
   getSessions,
@@ -12,6 +13,7 @@ import {
 } from '@/api/chat';
 
 export const useChatStore = defineStore('chat', () => {
+  const { t } = useI18n();
   const sessions = ref<ChatSession[]>([]);
   const currentSessionId = ref<string | null>(null);
   const messages = ref<ChatMessage[]>([]);
@@ -43,6 +45,16 @@ export const useChatStore = defineStore('chat', () => {
   async function sendMessage(content: string) {
     if (!currentSessionId.value || sending.value) return null;
 
+    // Auto-name session from first user message if still "新对话"
+    const sessionIdx = sessions.value.findIndex(s => s.id === currentSessionId.value);
+    const isFirstMessage = messages.value.length === 0;
+    if (isFirstMessage && sessionIdx >= 0 && sessions.value[sessionIdx].title === t('common.newConversation')) {
+      const autoTitle = content.length > 12 ? content.slice(0, 12) + '…' : content;
+      sessions.value[sessionIdx] = { ...sessions.value[sessionIdx], title: autoTitle };
+      // Fire-and-forget backend rename
+      apiRenameSession(currentSessionId.value, autoTitle).catch(() => {});
+    }
+
     // Optimistic: add user message
     const userMsg: ChatMessage = {
       id: 'temp-' + Date.now(),
@@ -72,7 +84,7 @@ export const useChatStore = defineStore('chat', () => {
         id: 'error-' + Date.now(),
         session_id: currentSessionId.value!,
         role: 'assistant',
-        content: err.response?.data?.error || '发送失败，请稍后重试。',
+        content: err.response?.data?.error || t('common.sendFailed'),
         created_at: new Date().toISOString(),
       });
       return null;

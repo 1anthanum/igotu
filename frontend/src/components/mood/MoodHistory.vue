@@ -10,10 +10,13 @@ import {
   Tooltip,
   Filler,
 } from 'chart.js';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import type { MoodEntry } from '@/api/mood';
 
 ChartJS.register(LineElement, PointElement, LinearScale, CategoryScale, Tooltip, Filler);
+
+const { t } = useI18n();
 
 const props = defineProps<{
   entries: MoodEntry[];
@@ -32,7 +35,7 @@ const chartData = computed(() => {
     }),
     datasets: [
       {
-        label: '情绪',
+        label: t('nav.mood'),
         data: data.map(e => e.mood_score),
         borderColor: accent,
         backgroundColor: `${accent}15`,
@@ -100,7 +103,7 @@ function formatTime(ts: string) {
   <div>
     <!-- Today's entries -->
     <div v-if="todayEntries.length > 0" class="card p-4 mb-4 animate-float-in" style="animation-delay: 0.2s;">
-      <h3 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">今日记录</h3>
+      <h3 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">{{ t('moodHistory.todayRecords') }}</h3>
       <div class="space-y-2">
         <div
           v-for="entry in todayEntries"
@@ -122,7 +125,7 @@ function formatTime(ts: string) {
 
     <!-- Trend chart -->
     <div v-if="entries.length >= 3" class="card p-4 animate-float-in" style="animation-delay: 0.3s;">
-      <h3 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">近期趋势</h3>
+      <h3 class="text-sm font-medium mb-3" style="color: var(--text-secondary);">{{ t('moodHistory.recentTrend') }}</h3>
       <div class="h-48">
         <Line :data="chartData" :options="chartOptions as any" />
       </div>

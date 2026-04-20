@@ -1,20 +1,35 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from '@/i18n';
 import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const { t } = useI18n();
 const auth = useAuthStore();
+
+const REMEMBER_KEY = 'igotu_remember';
 
 const isLogin = ref(true);
 const email = ref('');
 const username = ref('');
 const password = ref('');
+const rememberMe = ref(false);
 const error = ref('');
 const loading = ref(false);
 const mounted = ref(false);
 
 onMounted(() => {
+  // Restore saved credentials
+  try {
+    const saved = localStorage.getItem(REMEMBER_KEY);
+    if (saved) {
+      const data = JSON.parse(saved);
+      email.value = data.email || '';
+      password.value = data.password || '';
+      rememberMe.value = true;
+    }
+  } catch { /* ignore */ }
   setTimeout(() => (mounted.value = true), 50);
 });
 
@@ -27,9 +42,15 @@ async function handleSubmit() {
     } else {
       await auth.register(email.value, username.value, password.value);
     }
+    // Save or clear remembered credentials
+    if (rememberMe.value) {
+      localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email: email.value, password: password.value }));
+    } else {
+      localStorage.removeItem(REMEMBER_KEY);
+    }
     router.push('/');
   } catch (err: any) {
-    error.value = err.response?.data?.error || '操作失败，请稍后重试';
+    error.value = err.response?.data?.error || t('common.operationFailed');
   } finally {
     loading.value = false;
   }
@@ -72,36 +93,41 @@ async function handleSubmit() {
           </svg>
         </div>
         <h1 class="brand-title">IGOTU</h1>
-        <p class="brand-subtitle">像植物一样，慢慢生长</p>
+        <p class="brand-subtitle">{{ t('login.brandSubtitle') }}</p>
       </div>
 
       <!-- Form Card -->
       <div class="login-card">
         <div class="tab-selector">
-          <button @click="isLogin = true" :class="{ active: isLogin }">登录</button>
-          <button @click="isLogin = false" :class="{ active: !isLogin }">注册</button>
+          <button @click="isLogin = true" :class="{ active: isLogin }">{{ t('login.tabLogin') }}</button>
+          <button @click="isLogin = false" :class="{ active: !isLogin }">{{ t('login.tabRegister') }}</button>
         </div>
 
         <form @submit.prevent="handleSubmit" class="login-form">
-          <input v-model="email" type="email" placeholder="邮箱地址" required class="input-field" />
-          <input v-if="!isLogin" v-model="username" type="text" placeholder="用户名" required minlength="2" class="input-field" />
-          <input v-model="password" type="password" placeholder="密码" required minlength="6" class="input-field" />
+          <input v-model="email" type="email" :placeholder="t('login.emailPlaceholder')" required class="input-field" />
+          <input v-if="!isLogin" v-model="username" type="text" :placeholder="t('login.usernamePlaceholder')" required minlength="2" class="input-field" />
+          <input v-model="password" type="password" :placeholder="t('login.passwordPlaceholder')" required minlength="6" class="input-field" />
+
+          <label v-if="isLogin" class="remember-row">
+            <input v-model="rememberMe" type="checkbox" class="remember-checkbox" />
+            <span class="remember-label">{{ t('login.rememberMe') }}</span>
+          </label>
 
           <div v-if="error" class="error-msg">{{ error }}</div>
 
           <button type="submit" :disabled="loading" class="btn-primary w-full">
             <span v-if="loading" class="loading-dots"><span /><span /><span /></span>
-            <span v-else>{{ isLogin ? '走进花园' : '种下第一颗种子' }}</span>
+            <span v-else>{{ isLogin ? t('login.submitLogin') : t('login.submitRegister') }}</span>
           </button>
         </form>
       </div>
 
       <!-- Demo link -->
       <router-link to="/demo" class="demo-link">
-        或者，先体验一下 →
+        {{ t('login.demoLink') }}
       </router-link>
 
-      <p class="footer-note">你的数据只属于你自己</p>
+      <p class="footer-note">{{ t('login.footerNote') }}</p>
     </div>
   </div>
 </template>
@@ -211,6 +237,31 @@ async function handleSubmit() {
   flex-direction: column;
   gap: 0.875rem;
   margin-top: 1.25rem;
+}
+
+/* ── Remember me ── */
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  user-select: none;
+  margin: -0.25rem 0;
+}
+.remember-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--mood-accent);
+  cursor: pointer;
+  border-radius: 3px;
+}
+.remember-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.remember-row:hover .remember-label {
+  color: var(--text-secondary);
 }
 
 /* ── Error ── */

@@ -15,12 +15,14 @@ import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useMoodThemeStore, MOOD_CONFIG } from '@/composables/useMoodTheme';
 import { useSessionTree, BLOOM_EMOJI } from '@/composables/useSessionTree';
 import { useChatStore } from '@/stores/chat';
+import { useI18n } from '@/i18n';
 
 const emit = defineEmits<{
   'want-chat': [];
   'want-breathe': [];
 }>();
 
+const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 const chatStore = useChatStore();
 const { nodes, stats, streak } = useSessionTree();
@@ -34,16 +36,17 @@ const tappedNode = ref<{ id: string; label: string; x: number; y: number } | nul
 let tapTimeout: ReturnType<typeof setTimeout> | null = null;
 
 // ── Affect labeling pool — poetic, non-clinical ──
-const AFFECT_WORDS: Record<number, string[]> = {
-  1: ['沉重', '暗潮', '雾里', '疲惫', '寂静', '深渊'],
-  2: ['微暗', '犹豫', '朦胧', '阴天', '低沉', '徘徊'],
-  3: ['平静', '呼吸', '安稳', '存在', '中性', '漂流'],
-  4: ['舒展', '回暖', '明朗', '轻快', '安心', '萌芽'],
-  5: ['晴朗', '温暖', '饱满', '光', '绽放', '跃动'],
-};
+const AFFECT_WORDS = computed(() => {
+  const words: Record<number, string[]> = {};
+  for (let i = 1; i <= 5; i++) {
+    const translated = t(`sanctuary.affectWords.${i}`);
+    words[i] = Array.isArray(translated) ? translated : [];
+  }
+  return words;
+});
 
 function getAffectWord(): string {
-  const pool = AFFECT_WORDS[moodTheme.currentMood] || AFFECT_WORDS[3];
+  const pool = AFFECT_WORDS.value[moodTheme.currentMood] || AFFECT_WORDS.value[3];
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
@@ -69,19 +72,20 @@ function onBackgroundTap() {
 }
 
 // ── Ambient message — rotates slowly ──
-const AMBIENT_MESSAGES: Record<number, string[]> = {
-  1: ['你在这里就好。', '什么都不需要做。', '萤火虫也在。'],
-  2: ['慢慢来。', '天会亮的。', '你已经在了。'],
-  3: ['安静也是力量。', '此刻，平静。', '呼吸。'],
-  4: ['你在生长。', '新叶在舒展。', '感受光。'],
-  5: ['阳光穿过了树冠。', '好日子。', '你值得这个。'],
-};
+const AMBIENT_MESSAGES = computed(() => {
+  const messages: Record<number, string[]> = {};
+  for (let i = 1; i <= 5; i++) {
+    const translated = t(`sanctuary.ambientMessages.${i}`);
+    messages[i] = Array.isArray(translated) ? translated : [];
+  }
+  return messages;
+});
 
 const ambientIndex = ref(0);
 let ambientTimer: ReturnType<typeof setInterval> | null = null;
 
 const ambientMessage = computed(() => {
-  const pool = AMBIENT_MESSAGES[moodTheme.currentMood] || AMBIENT_MESSAGES[3];
+  const pool = AMBIENT_MESSAGES.value[moodTheme.currentMood] || AMBIENT_MESSAGES.value[3];
   return pool[ambientIndex.value % pool.length];
 });
 
@@ -325,16 +329,16 @@ const showHints = ref(true);
 
     <!-- Streak (if active) -->
     <p v-if="streak.isActive && streak.days >= 2" class="streak-label">
-      🔥 连续 {{ streak.days }} 天
+      🔥 {{ t('sanctuary.streakLabel', { days: streak.days }) }}
     </p>
 
     <!-- Bottom subtle hints (dismissible) -->
     <div v-if="showHints" class="sanctuary-hints">
       <button class="hint-pill" @click.stop="emit('want-breathe')">
-        🍃 <span>呼吸</span>
+        🍃 <span>{{ t('sanctuary.hintBreathe') }}</span>
       </button>
       <button class="hint-pill" @click.stop="emit('want-chat')">
-        💭 <span>聊聊</span>
+        💭 <span>{{ t('sanctuary.hintChat') }}</span>
       </button>
     </div>
   </div>

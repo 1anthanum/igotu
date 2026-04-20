@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from '@/i18n';
 import { useMoodStore } from '@/stores/mood';
 import { MOOD_CONFIG } from '@/composables/useMoodTheme';
 
+const { t } = useI18n();
 const moodStore = useMoodStore();
 const note = ref('');
 const showNote = ref(false);
@@ -23,7 +25,7 @@ async function selectMood(mood: typeof MOOD_CONFIG[number]) {
 <template>
   <div class="card-glow p-6 animate-float-in" style="animation-delay: 0.1s;">
     <p class="text-sm mb-5" style="color: var(--text-secondary);">
-      不用思考太多，选一个最接近此刻的感受。
+      {{ t('moodPicker.instruction') }}
     </p>
 
     <!-- Spectrum selector: bars with varying heights -->
@@ -88,12 +90,12 @@ async function selectMood(mood: typeof MOOD_CONFIG[number]) {
         class="text-xs transition-colors"
         style="color: var(--text-muted);"
       >
-        + 添加备注
+        {{ t('moodPicker.addNote') }}
       </button>
       <textarea
         v-else
         v-model="note"
-        placeholder="想说点什么吗？（可选）"
+        :placeholder="t('moodPicker.notePlaceholder')"
         class="input-field w-full text-sm resize-none"
         rows="2"
       />
@@ -106,7 +108,7 @@ async function selectMood(mood: typeof MOOD_CONFIG[number]) {
         class="mt-3 text-center text-sm font-medium"
         style="color: var(--mood-accent);"
       >
-        🌱 种子已种下
+        {{ t('moodPicker.seedPlanted') }}
       </div>
     </transition>
   </div>

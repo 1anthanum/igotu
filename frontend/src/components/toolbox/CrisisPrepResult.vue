@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
+import { useI18n } from '@/i18n';
 
 interface SymptomData {
   id: string;
@@ -26,14 +27,15 @@ const props = defineProps<{ data: PrepData }>();
 const emit = defineEmits<{ 'start-over': [] }>();
 
 const moodTheme = useMoodThemeStore();
+const { t } = useI18n();
 const activeTab = ref<'structured' | 'script'>('structured');
 const copied = ref(false);
 
-const SEVERITY_LABELS: Record<string, string> = {
-  mild: '轻度',
-  moderate: '中度',
-  severe: '严重',
-};
+const SEVERITY_LABELS = computed(() => ({
+  mild: t('crisisPrep.severity.mild'),
+  moderate: t('crisisPrep.severity.moderate'),
+  severe: t('crisisPrep.severity.severe'),
+}));
 
 const SEVERITY_COLORS: Record<string, string> = {
   mild: '#10b981',
@@ -42,30 +44,30 @@ const SEVERITY_COLORS: Record<string, string> = {
 };
 
 function durationLabel(days: number): string {
-  if (days <= 1) return '不到一天';
-  if (days <= 3) return '2-3天';
-  if (days <= 7) return '大约一周';
-  if (days <= 14) return '大约两周';
-  return '超过一个月';
+  if (days <= 1) return t('crisisResult.durationLabels.lessThanDay');
+  if (days <= 3) return t('crisisResult.durationLabels.twothreeDays');
+  if (days <= 7) return t('crisisResult.durationLabels.aboutWeek');
+  if (days <= 14) return t('crisisResult.durationLabels.aboutTwoWeeks');
+  return t('crisisResult.durationLabels.overMonth');
 }
 
 // ── Structured text (for clipboard) ──
 const structuredText = computed(() => {
   const lines: string[] = [];
-  lines.push('=== 988 电话准备信息 ===\n');
+  lines.push(`=== ${t('crisisResult.structuredHeader')} ===\n`);
 
-  lines.push('【主要症状】');
+  lines.push(t('crisisResult.structuredSymptoms'));
   for (const s of props.data.symptoms) {
-    lines.push(`  ${s.emoji} ${s.label} — ${SEVERITY_LABELS[s.severity]}`);
+    lines.push(`  ${s.emoji} ${s.label} — ${SEVERITY_LABELS.value[s.severity]}`);
   }
 
-  lines.push(`\n【持续时间】${durationLabel(props.data.durationDays)}`);
+  lines.push(`\n${t('crisisResult.structuredDuration')}${durationLabel(props.data.durationDays)}`);
 
   if (props.data.trigger) {
-    lines.push(`\n【触发因素】${props.data.trigger}`);
+    lines.push(`\n${t('crisisResult.structuredTrigger')}${props.data.trigger}`);
   }
 
-  lines.push('\n【求助目标】');
+  lines.push(`\n${t('crisisResult.structuredGoals')}`);
   for (const g of props.data.goals) {
     lines.push(`  ${g.emoji} ${g.label}`);
   }
@@ -77,24 +79,24 @@ const structuredText = computed(() => {
 const scriptText = computed(() => {
   const symptoms = props.data.symptoms;
   const mainSymptoms = symptoms.slice(0, 3).map(s => s.label).join('、');
-  const extraCount = symptoms.length > 3 ? `还有其他${symptoms.length - 3}个问题` : '';
+  const extraCount = symptoms.length > 3 ? t('crisisResult.scriptExtraSymptoms', { count: symptoms.length - 3 }) : '';
 
   const duration = durationLabel(props.data.durationDays);
-  const severity = symptoms.some(s => s.severity === 'severe') ? '比较严重'
-    : symptoms.some(s => s.severity === 'moderate') ? '中等程度' : '还算可以控制';
+  const severity = symptoms.some(s => s.severity === 'severe') ? t('crisisResult.scriptSeveritySevere')
+    : symptoms.some(s => s.severity === 'moderate') ? t('crisisResult.scriptSeverityModerate') : t('crisisResult.scriptSeverityMild');
 
   const goals = props.data.goals.map(g => g.label.replace('希望', '').replace('需要', '')).join('，');
 
-  let script = `你好，我想说一下我最近的情况。\n\n`;
-  script += `我大概有${duration}一直在经历${mainSymptoms}`;
+  let script = `${t('crisisResult.scriptGreeting')}\n\n`;
+  script += t('crisisResult.scriptIntroduction', { duration, mainSymptoms });
   if (extraCount) script += `，${extraCount}`;
-  script += `。程度上我觉得${severity}。\n\n`;
+  script += `。${t('crisisResult.scriptSeverity', { severity })}\n\n`;
 
   if (props.data.trigger) {
-    script += `我觉得可能和这些有关：${props.data.trigger}\n\n`;
+    script += `${t('crisisResult.scriptTrigger', { trigger: props.data.trigger })}\n\n`;
   }
 
-  script += `我打电话是想${goals}。`;
+  script += t('crisisResult.scriptGoal', { goals });
 
   return script;
 });
@@ -120,22 +122,22 @@ async function copyText(text: string) {
 
 <template>
   <div class="result-container animate-float-in">
-    <h2 class="result-title">你的电话准备信息</h2>
+    <h2 class="result-title">{{ t('crisisResult.title') }}</h2>
 
     <!-- Tab switcher -->
     <div class="tab-selector mb-4">
       <button :class="{ active: activeTab === 'structured' }" @click="activeTab = 'structured'">
-        📋 结构化信息
+        📋 {{ t('crisisResult.tabStructured') }}
       </button>
       <button :class="{ active: activeTab === 'script' }" @click="activeTab = 'script'">
-        💬 通话脚本
+        💬 {{ t('crisisResult.tabScript') }}
       </button>
     </div>
 
     <!-- Tab 1: Structured -->
     <div v-if="activeTab === 'structured'" class="result-card">
       <div class="result-section">
-        <h3 class="section-label">📋 主要症状</h3>
+        <h3 class="section-label">📋 {{ t('crisisResult.sectionSymptoms') }}</h3>
         <div class="symptom-tags">
           <span
             v-for="s in data.symptoms"
@@ -154,17 +156,17 @@ async function copyText(text: string) {
       </div>
 
       <div class="result-section">
-        <h3 class="section-label">⏱ 持续时间</h3>
+        <h3 class="section-label">⏱ {{ t('crisisResult.sectionDuration') }}</h3>
         <p class="section-value">{{ durationLabel(data.durationDays) }}</p>
       </div>
 
       <div v-if="data.trigger" class="result-section">
-        <h3 class="section-label">💡 触发因素</h3>
+        <h3 class="section-label">💡 {{ t('crisisResult.sectionTrigger') }}</h3>
         <p class="section-value">{{ data.trigger }}</p>
       </div>
 
       <div class="result-section">
-        <h3 class="section-label">🎯 求助目标</h3>
+        <h3 class="section-label">🎯 {{ t('crisisResult.sectionGoals') }}</h3>
         <div class="goal-tags">
           <span v-for="g in data.goals" :key="g.id" class="goal-tag">
             {{ g.emoji }} {{ g.label }}
@@ -173,35 +175,35 @@ async function copyText(text: string) {
       </div>
 
       <button class="copy-btn" @click="copyText(structuredText)">
-        {{ copied ? '✓ 已复制' : '📋 复制全文' }}
+        {{ copied ? `✓ ${t('common.copied')}` : `📋 ${t('crisisResult.copyAll')}` }}
       </button>
     </div>
 
     <!-- Tab 2: Script -->
     <div v-if="activeTab === 'script'" class="result-card">
       <p class="script-intro" style="color: var(--text-muted);">
-        你可以在打电话前读一读，或者直接念出来：
+        {{ t('crisisResult.scriptIntro') }}
       </p>
       <div class="script-text">
         {{ scriptText }}
       </div>
       <button class="copy-btn" @click="copyText(scriptText)">
-        {{ copied ? '✓ 已复制' : '📋 复制脚本' }}
+        {{ copied ? `✓ ${t('common.copied')}` : `📋 ${t('crisisResult.copyScript')}` }}
       </button>
     </div>
 
     <!-- Action buttons -->
     <div class="action-buttons mt-4">
       <a href="tel:988" class="call-btn btn-primary">
-        📞 拨打 988
+        {{ t('crisisResult.call988') }}
       </a>
       <a href="sms:988" class="sms-btn btn-secondary">
-        💬 发短信到 988
+        {{ t('crisisResult.sms988') }}
       </a>
     </div>
 
     <button class="start-over-btn" @click="emit('start-over')">
-      重新填写
+      {{ t('crisisResult.startOver') }}
     </button>
   </div>
 </template>

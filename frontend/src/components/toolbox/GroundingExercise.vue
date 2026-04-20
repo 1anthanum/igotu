@@ -1,25 +1,31 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, nextTick } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
-import { logExercise } from '@/api/toolbox';
+import { useExerciseTracker } from '@/composables/useExerciseTracker';
+import CelebrationBurst from '@/components/effects/CelebrationBurst.vue';
 
 const router = useRouter();
 const moodTheme = useMoodThemeStore();
+const exerciseTracker = useExerciseTracker();
+const { t } = useI18n();
 
-const STEPS = [
-  { n: 5, sense: '看到', icon: '👁️', prompt: '看看你的周围，说出5样你能看到的东西' },
-  { n: 4, sense: '触到', icon: '✋', prompt: '感受一下，说出4样你能摸到的东西' },
-  { n: 3, sense: '听到', icon: '👂', prompt: '安静下来，说出3种你能听到的声音' },
-  { n: 2, sense: '闻到', icon: '👃', prompt: '深呼吸，说出2种你能闻到的气味' },
-  { n: 1, sense: '尝到', icon: '👅', prompt: '感受一下，说出1种你能尝到的味道' },
-];
+const celebRef = ref<InstanceType<typeof CelebrationBurst> | null>(null);
+
+const STEPS = computed(() => [
+  { n: 5, sense: t('grounding.senses.see'), icon: '👁️', prompt: t('grounding.prompts.see') },
+  { n: 4, sense: t('grounding.senses.touch'), icon: '✋', prompt: t('grounding.prompts.touch') },
+  { n: 3, sense: t('grounding.senses.hear'), icon: '👂', prompt: t('grounding.prompts.hear') },
+  { n: 2, sense: t('grounding.senses.smell'), icon: '👃', prompt: t('grounding.prompts.smell') },
+  { n: 1, sense: t('grounding.senses.taste'), icon: '👅', prompt: t('grounding.prompts.taste') },
+]);
 
 const step = ref(0);
 const inputs = ref<Record<number, string>>({});
 const isDone = ref(false);
 
-const currentStep = computed(() => STEPS[step.value]);
+const currentStep = computed(() => STEPS.value[step.value]);
 const progress = computed(() => ((step.value + 1) / 5) * 100);
 
 function next() {
@@ -34,14 +40,24 @@ function prev() {
   if (step.value > 0) step.value--;
 }
 
-async function complete() {
+function complete() {
   isDone.value = true;
+
+  // Fire celebration
+  nextTick(() => celebRef.value?.fire('🌍'));
+
+  // Local tracking
+  exerciseTracker.logCompletion('grounding', '5-4-3-2-1', { inputs: inputs.value });
+
+  // Backend sync (fire-and-forget)
   try {
-    await logExercise({
-      type: 'grounding',
-      technique: '5-4-3-2-1',
-      data: { inputs: inputs.value },
-    });
+    import('@/api/toolbox').then(({ logExercise }) => {
+      logExercise({
+        type: 'grounding',
+        technique: '5-4-3-2-1',
+        data: { inputs: inputs.value },
+      }).catch(() => {});
+    }).catch(() => {});
   } catch { /* silent */ }
 }
 
@@ -53,18 +69,22 @@ function restart() {
 </script>
 
 <template>
-  <div class="py-6 max-w-2xl mx-auto px-4">
+  <div class="tool-page">
+    <!-- Page background gradient -->
+    <div class="tool-bg grounding-bg" />
+
+    <div class="py-6 max-w-2xl mx-auto px-4 relative z-10">
     <button
       @click="router.push('/toolbox')"
       class="text-sm mb-4 flex items-center gap-1 transition-colors"
       style="color: var(--text-muted);"
     >
-      ← 返回工具箱
+      ← {{ t('common.backToToolbox') }}
     </button>
 
-    <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">扎根练习 5-4-3-2-1</h1>
+    <h1 class="text-xl font-semibold mb-1" style="color: var(--text-primary);">{{ t('grounding.title') }}</h1>
     <p class="text-sm mb-6" style="color: var(--text-secondary);">
-      {{ moodTheme.isLowEnergy ? '不用想太多，感受就好' : '用五感把自己拉回当下' }}
+      {{ moodTheme.isLowEnergy ? t('grounding.subtitleLow') : t('grounding.subtitleNormal') }}
     </p>
 
     <!-- Complete -->
@@ -78,9 +98,9 @@ function restart() {
       >
         <span class="text-4xl">🌱</span>
       </div>
-      <h2 class="text-xl font-semibold" :style="{ color: moodTheme.palette.accent }">你回来了</h2>
+      <h2 class="text-xl font-semibold" :style="{ color: moodTheme.palette.accent }">{{ t('grounding.doneTitle') }}</h2>
       <p class="text-sm" style="color: var(--text-secondary);">
-        你刚才用五感把自己拉回了当下。你在这里，你是安全的。
+        {{ t('grounding.doneMsg') }}
       </p>
 
       <!-- Summary -->
@@ -89,16 +109,16 @@ function restart() {
           <span class="text-lg flex-shrink-0">{{ s.icon }}</span>
           <div>
             <p class="text-sm font-medium" style="color: var(--text-primary);">
-              {{ s.sense }}的 {{ s.n }} 样东西
+              {{ t('grounding.summaryItem', { sense: s.sense, n: s.n }) }}
             </p>
-            <p class="text-sm" style="color: var(--text-muted);">{{ inputs[i] || '（未填写）' }}</p>
+            <p class="text-sm" style="color: var(--text-muted);">{{ inputs[i] || t('grounding.notFilled') }}</p>
           </div>
         </div>
       </div>
 
       <div class="flex gap-3 justify-center mt-6">
-        <button @click="restart" class="btn-secondary">再做一次</button>
-        <button @click="router.push('/toolbox')" class="btn-ghost">返回工具箱</button>
+        <button @click="restart" class="btn-secondary">{{ t('common.restart') }}</button>
+        <button @click="router.push('/toolbox')" class="btn-ghost">{{ t('common.backToToolbox') }}</button>
       </div>
     </div>
 
@@ -140,7 +160,7 @@ function restart() {
           {{ currentStep.n }}
         </div>
         <p class="text-base font-semibold mt-3" :style="{ color: moodTheme.palette.navActiveText }">
-          你能{{ currentStep.sense }}的东西
+          {{ t('grounding.stepDisplay', { sense: currentStep.sense }) }}
         </p>
         <p class="text-sm mt-1" style="color: var(--text-secondary);">{{ currentStep.prompt }}</p>
       </div>
@@ -150,22 +170,22 @@ function restart() {
         <textarea
           v-model="inputs[step]"
           :placeholder="moodTheme.isLowEnergy
-            ? `想写就写，不写也可以…`
-            : `写下你${currentStep.sense}的${currentStep.n}样东西...`"
+            ? t('grounding.inputPlaceholderLow')
+            : t('grounding.inputPlaceholder', { sense: currentStep.sense, n: currentStep.n })"
           class="input-field w-full text-sm resize-none"
           :rows="moodTheme.isLowEnergy ? 2 : 4"
         />
         <p v-if="moodTheme.isLowEnergy" class="text-xs text-center" style="color: var(--text-muted);">
-          不想打字？在心里默念也一样有效
+          {{ t('grounding.noTextHint') }}
         </p>
       </div>
 
       <div class="flex gap-3">
-        <button v-if="step > 0" @click="prev" class="btn-secondary flex-1">← 上一步</button>
+        <button v-if="step > 0" @click="prev" class="btn-secondary flex-1">← {{ t('common.previous') }}</button>
         <button @click="next" class="btn-primary flex-1">
           {{ step < 4
-            ? (inputs[step]?.trim() ? '下一步 →' : '跳过文字，下一步 →')
-            : '完成'
+            ? (inputs[step]?.trim() ? t('grounding.nextStep') : t('grounding.skipText'))
+            : t('common.done')
           }}
         </button>
       </div>
@@ -174,8 +194,31 @@ function restart() {
         @click="router.push('/toolbox')"
         class="safe-exit-hint"
       >
-        先到这里 · 随时可以回来 →
+        {{ t('common.safeExit') }} →
       </button>
     </div>
+    </div>
+    <CelebrationBurst ref="celebRef" />
   </div>
 </template>
+
+<style scoped>
+.tool-page {
+  position: relative;
+  min-height: 100vh;
+}
+.tool-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.grounding-bg {
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(5, 150, 105, 0.12) 0%,
+    rgba(5, 150, 105, 0.04) 35%,
+    transparent 70%
+  );
+}
+</style>

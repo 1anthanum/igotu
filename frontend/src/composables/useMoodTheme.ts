@@ -42,6 +42,12 @@ interface MoodPalette {
   comfortGlow: string;
   /** 光效强度（0-1，用于粒子/卡片发光的全局倍率） */
   glowIntensity: number;
+  /** 自适应排版：正文字重 */
+  fontWeight: number;
+  /** 自适应排版：行高 */
+  lineHeight: number;
+  /** 自适应排版：字距 (em) */
+  letterSpacing: number;
 }
 
 const PALETTES: Record<number, MoodPalette> = {
@@ -59,6 +65,9 @@ const PALETTES: Record<number, MoodPalette> = {
     lightLine: 'rgba(139,92,246,0.25)',
     comfortGlow: 'rgba(139,92,246,0.04)',
     glowIntensity: 0.3,
+    fontWeight: 300,
+    lineHeight: 1.9,
+    letterSpacing: 0.02,
   },
   // 2 — 黎明前的微光（靛蓝）
   2: {
@@ -74,6 +83,9 @@ const PALETTES: Record<number, MoodPalette> = {
     lightLine: 'rgba(99,102,241,0.25)',
     comfortGlow: 'rgba(99,102,241,0.03)',
     glowIntensity: 0.5,
+    fontWeight: 300,
+    lineHeight: 1.8,
+    letterSpacing: 0.015,
   },
   // 3 — 安静的苔藓（青绿）
   3: {
@@ -89,6 +101,9 @@ const PALETTES: Record<number, MoodPalette> = {
     lightLine: 'rgba(20,184,166,0.25)',
     comfortGlow: 'transparent',
     glowIntensity: 0.6,
+    fontWeight: 400,
+    lineHeight: 1.7,
+    letterSpacing: 0,
   },
   // 4 — 新叶舒展（翠绿）
   4: {
@@ -104,6 +119,9 @@ const PALETTES: Record<number, MoodPalette> = {
     lightLine: 'rgba(16,185,129,0.25)',
     comfortGlow: 'transparent',
     glowIntensity: 0.8,
+    fontWeight: 400,
+    lineHeight: 1.65,
+    letterSpacing: -0.005,
   },
   // 5 — 阳光穿过树冠（暖琥珀）
   5: {
@@ -119,6 +137,9 @@ const PALETTES: Record<number, MoodPalette> = {
     lightLine: 'rgba(245,158,11,0.25)',
     comfortGlow: 'transparent',
     glowIntensity: 1.0,
+    fontWeight: 500,
+    lineHeight: 1.6,
+    letterSpacing: -0.01,
   },
 };
 
@@ -182,6 +203,11 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
     root.style.setProperty('--mood-comfort-glow', p.comfortGlow);
     root.style.setProperty('--glow-intensity', String(p.glowIntensity));
     root.style.setProperty('--animation-speed', String(animationSpeed.value));
+
+    // 自适应排版
+    root.style.setProperty('--mood-font-weight', String(p.fontWeight));
+    root.style.setProperty('--mood-line-height', String(p.lineHeight));
+    root.style.setProperty('--mood-letter-spacing', `${p.letterSpacing}em`);
 
     // Toggle low-energy class on body for global CSS adaptations
     if (isLowEnergy.value) {

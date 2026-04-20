@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import type { CalendarDay } from '@/types/achievement';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   data: CalendarDay[];
@@ -72,14 +75,14 @@ const weeks = computed(() => {
 
 function formatTooltip(day: { date: string; count: number }) {
   if (day.count < 0) return '';
-  if (day.count === 0) return `${day.date}: 暂无记录`;
-  return `${day.date}: ${day.count} 个成就`;
+  if (day.count === 0) return `${day.date}: ${t('visualization.noRecords')}`;
+  return `${day.date}: ${day.count} ${t('visualization.achievements')}`;
 }
 </script>
 
 <template>
   <div class="card animate-float-in" style="animation-delay: 0.2s;">
-    <h3 class="text-sm font-semibold mb-4" style="color: var(--text-primary);">成就日历</h3>
+    <h3 class="text-sm font-semibold mb-4" style="color: var(--text-primary);">{{ t('visualization.achievementCalendar') }}</h3>
     <div class="overflow-x-auto">
       <div class="flex gap-[3px] min-w-max">
         <div
@@ -99,13 +102,13 @@ function formatTooltip(day: { date: string; count: number }) {
     </div>
     <!-- Legend -->
     <div class="flex items-center gap-1 mt-3 text-xs" style="color: var(--text-muted);">
-      <span>少</span>
+      <span>{{ t('visualization.less') }}</span>
       <div class="w-3 h-3 rounded-sm" style="background: rgba(100,220,180,0.04);" />
       <div class="w-3 h-3 rounded-sm" :style="{ background: `color-mix(in srgb, ${moodTheme.palette.accent} 25%, transparent)` }" />
       <div class="w-3 h-3 rounded-sm" :style="{ background: `color-mix(in srgb, ${moodTheme.palette.accent} 50%, transparent)` }" />
       <div class="w-3 h-3 rounded-sm" :style="{ background: `color-mix(in srgb, ${moodTheme.palette.accent} 75%, transparent)` }" />
       <div class="w-3 h-3 rounded-sm" :style="{ background: moodTheme.palette.accent }" />
-      <span>多</span>
+      <span>{{ t('visualization.more') }}</span>
     </div>
   </div>
 </template>

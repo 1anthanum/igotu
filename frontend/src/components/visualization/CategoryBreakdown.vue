@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from '@/i18n';
+
+const { t } = useI18n();
 
 const props = defineProps<{
   categoryCounts: Record<string, number>;
@@ -46,7 +49,7 @@ const sorted = computed(() =>
 
 <template>
   <div class="card" v-if="total > 0">
-    <h3 class="text-sm font-semibold mb-4" style="color: var(--text-primary);">分类统计</h3>
+    <h3 class="text-sm font-semibold mb-4" style="color: var(--text-primary);">{{ t('visualization.categoryBreakdown') }}</h3>
     <div class="space-y-3">
       <div v-for="item in sorted" :key="item.category" class="flex items-center gap-3">
         <div class="w-20 text-xs truncate" style="color: var(--text-muted);">{{ item.name }}</div>
@@ -56,7 +59,7 @@ const sorted = computed(() =>
             :style="{ width: `${item.percent}%`, backgroundColor: item.color }"
           />
         </div>
-        <div class="w-12 text-xs text-right" style="color: var(--text-muted);">{{ item.count }}次</div>
+        <div class="w-12 text-xs text-right" style="color: var(--text-muted);">{{ item.count }}{{ t('visualization.times') }}</div>
       </div>
     </div>
   </div>

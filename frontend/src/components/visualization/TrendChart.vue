@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
 import { Chart, registerables } from 'chart.js';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 
 Chart.register(...registerables);
+
+const { t } = useI18n();
 
 const props = defineProps<{
   dailyCounts: { date: string; count: number }[];
@@ -31,7 +34,7 @@ function renderChart() {
     data: {
       labels,
       datasets: [{
-        label: '每日成就数',
+        label: t('visualization.dailyAchievements'),
         data: props.dailyCounts.map(d => d.count),
         borderColor: accent,
         backgroundColor: `color-mix(in srgb, ${accent} 10%, transparent)`,
@@ -83,7 +86,7 @@ watch(() => moodTheme.palette.accent, renderChart);
 
 <template>
   <div class="card">
-    <h3 class="text-sm font-semibold mb-4" style="color: var(--text-primary);">{{ title || '趋势' }}</h3>
+    <h3 class="text-sm font-semibold mb-4" style="color: var(--text-primary);">{{ title || t('visualization.trend') }}</h3>
     <div class="h-48">
       <canvas ref="canvasRef" />
     </div>

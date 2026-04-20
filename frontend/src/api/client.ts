@@ -16,12 +16,25 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Track whether a redirect is already in progress to avoid multiple redirects
+let isRedirecting = false;
+
 // Response interceptor: handle 401
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Try to refresh token
+      // Skip redirect for optional/background API calls (exercises, mood logs, etc.)
+      const optionalPaths = ['/exercises', '/phq9', '/cognitive', '/chat/sessions'];
+      const requestPath = error.config?.url || '';
+      const isOptional = optionalPaths.some(p => requestPath.includes(p));
+
+      if (isOptional) {
+        // Don't attempt refresh or redirect — just fail silently
+        return Promise.reject(error);
+      }
+
+      // Try to refresh token for critical API calls
       const refreshToken = localStorage.getItem('refresh_token');
       if (refreshToken && !error.config._retry) {
         error.config._retry = true;
@@ -32,10 +45,13 @@ apiClient.interceptors.response.use(
           error.config.headers.Authorization = `Bearer ${data.accessToken}`;
           return apiClient(error.config);
         } catch {
-          // Refresh failed, redirect to login
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          window.location.href = '/login';
+          // Refresh failed, redirect to login (only once)
+          if (!isRedirecting) {
+            isRedirecting = true;
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            window.location.href = '/login';
+          }
         }
       }
     }

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useChatStore } from '@/stores/chat';
 import { BLOOM_EMOJI, RARE_BLOOM_CONFIG, type BloomStage, type RareBloomType } from '@/composables/useSessionTree';
@@ -23,6 +24,7 @@ const emit = defineEmits<{
   'select-session': [sessionId: string];
 }>();
 
+const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 const chatStore = useChatStore();
 const isEditing = ref(props.editMode || false);
@@ -139,7 +141,7 @@ onBeforeUnmount(() => {
 
       <!-- Info row -->
       <div class="flex items-center gap-3 text-[10px] mb-2" style="color: var(--text-muted);">
-        <span>💬 {{ messageCount }} 条消息</span>
+        <span>💬 {{ messageCount }} {{ t('growthTree.messageCount') }}</span>
         <span>📅 {{ formattedDate }}</span>
       </div>
 
@@ -169,7 +171,7 @@ onBeforeUnmount(() => {
           color: moodTheme.palette.navActiveText,
         }"
       >
-        打开对话
+        {{ t('growthTree.openChat') }}
       </button>
     </div>
   </Teleport>

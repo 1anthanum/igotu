@@ -10,9 +10,11 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
+import { useI18n } from '@/i18n';
 
 const emit = defineEmits<{ 'task-done': [label: string] }>();
 
+const { t } = useI18n();
 const router = useRouter();
 const moodTheme = useMoodThemeStore();
 
@@ -32,14 +34,14 @@ const cards = computed<GuidanceCard[]>(() => {
 
   if (mood <= 3) {
     return [
-      { emoji: '💭', title: '聊聊今天', desc: '说出来会轻松一些', route: '/chat', taskLabel: '完成一次对话' },
-      { emoji: '🌿', title: '记录感受', desc: '给此刻的心情留个印记', route: '/mood', taskLabel: '记录心情' },
+      { emoji: '💭', title: t('guidance.cards.chatToday.title'), desc: t('guidance.cards.chatToday.desc'), route: '/chat', taskLabel: t('guidance.taskLabels.chat') },
+      { emoji: '🌿', title: t('guidance.cards.recordFeelings.title'), desc: t('guidance.cards.recordFeelings.desc'), route: '/mood', taskLabel: t('guidance.taskLabels.recordMood') },
     ];
   }
   // mood 4-5
   return [
-    { emoji: '📝', title: '整理一下', desc: '好状态适合梳理思路', route: '/chat', taskLabel: '完成总结规划' },
-    { emoji: '🌉', title: '治疗笔记', desc: '记录想和治疗师分享的事', route: '/therapy', taskLabel: '更新治疗笔记' },
+    { emoji: '📝', title: t('guidance.cards.organize.title'), desc: t('guidance.cards.organize.desc'), route: '/chat', taskLabel: t('guidance.taskLabels.summarizePlan') },
+    { emoji: '🌉', title: t('guidance.cards.therapyNote.title'), desc: t('guidance.cards.therapyNote.desc'), route: '/therapy', taskLabel: t('guidance.taskLabels.updateTherapyNote') },
   ];
 });
 
@@ -52,7 +54,7 @@ function goTo(card: GuidanceCard) {
 <template>
   <div v-if="cards.length > 0" class="guidance-section animate-float-in-delay-1">
     <p class="guidance-label" style="color: var(--text-muted);">
-      现在适合
+      {{ t('guidance.suitableNow') }}
     </p>
     <div class="guidance-cards">
       <button

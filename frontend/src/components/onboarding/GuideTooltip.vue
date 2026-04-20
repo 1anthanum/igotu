@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, onBeforeUnmount, computed } from 'vue';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useOnboarding } from '@/composables/useOnboarding';
 
@@ -12,6 +13,7 @@ const props = defineProps<{
   position?: 'top' | 'bottom' | 'left' | 'right';
 }>();
 
+const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 const onboarding = useOnboarding();
 
@@ -124,7 +126,7 @@ onBeforeUnmount(() => window.removeEventListener('resize', onResize));
             color: moodTheme.palette.navActiveText,
           }"
         >
-          知道了
+          {{ t('onboarding.gotItButton') }}
         </button>
       </div>
     </transition>

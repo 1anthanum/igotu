@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import ChoiceButtons from './ChoiceButtons.vue';
 
 const props = defineProps<{
@@ -7,6 +7,12 @@ const props = defineProps<{
   content: string;
   isLast?: boolean;
 }>();
+
+const isVisible = ref(false);
+onMounted(() => {
+  // Tiny delay → triggers CSS transition for entrance animation
+  requestAnimationFrame(() => { isVisible.value = true; });
+});
 
 const emit = defineEmits<{
   selectChoice: [text: string];
@@ -58,8 +64,11 @@ const parsed = computed(() => {
 
 <template>
   <div
-    class="flex gap-3 mb-4"
-    :class="role === 'user' ? 'flex-row-reverse' : ''"
+    class="flex gap-3 mb-4 chat-bubble-entrance"
+    :class="[
+      role === 'user' ? 'flex-row-reverse from-right' : 'from-left',
+      isVisible ? 'entered' : '',
+    ]"
   >
     <!-- Avatar -->
     <div
@@ -88,3 +97,24 @@ const parsed = computed(() => {
     </div>
   </div>
 </template>
+
+<style scoped>
+.chat-bubble-entrance {
+  transition: opacity 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  opacity: 0;
+}
+.chat-bubble-entrance.from-left  { transform: translateX(-16px); }
+.chat-bubble-entrance.from-right { transform: translateX(16px); }
+.chat-bubble-entrance.entered {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-bubble-entrance {
+    transition: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
+</style>

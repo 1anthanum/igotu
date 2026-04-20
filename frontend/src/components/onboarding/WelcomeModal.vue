@@ -1,19 +1,21 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useOnboarding } from '@/composables/useOnboarding';
 
+const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 const onboarding = useOnboarding();
 
 const show = computed(() => onboarding.shouldShowWelcome.value);
 
-const features = [
-  { icon: '💬', title: '对话', desc: '和小树聊聊，什么都可以说' },
-  { icon: '🧰', title: '工具箱', desc: '呼吸练习、想法检验等自助工具' },
-  { icon: '📊', title: '情绪', desc: '追踪你的情绪变化趋势' },
-  { icon: '🌳', title: '成长树', desc: '每次对话，树上就多一片叶子' },
-];
+const features = computed(() => [
+  { icon: '💬', title: t('onboarding.featureChat'), desc: t('onboarding.featureChatDesc') },
+  { icon: '🧰', title: t('onboarding.featureToolbox'), desc: t('onboarding.featureToolboxDesc') },
+  { icon: '📊', title: t('onboarding.featureMood'), desc: t('onboarding.featureMoodDesc') },
+  { icon: '🌳', title: t('onboarding.featureGrowth'), desc: t('onboarding.featureGrowthDesc') },
+]);
 
 function start() {
   onboarding.markWelcomeSeen();
@@ -40,9 +42,9 @@ function skip() {
             >
               <span class="text-3xl">🌱</span>
             </div>
-            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">欢迎来到 IGOTU</h2>
+            <h2 class="text-lg font-semibold" style="color: var(--text-primary);">{{ t('onboarding.welcomeTitle') }}</h2>
             <p class="text-sm mt-1" style="color: var(--text-secondary);">
-              这里是你的安全空间。没有评判，只有陪伴。
+              {{ t('onboarding.welcomeSubtitle') }}
             </p>
           </div>
 
@@ -67,13 +69,13 @@ function skip() {
             @click="start"
             class="btn-primary w-full mb-2"
           >
-            开始使用
+            {{ t('onboarding.startButton') }}
           </button>
           <button
             @click="skip"
             class="safe-exit-hint w-full"
           >
-            跳过引导
+            {{ t('onboarding.skipButton') }}
           </button>
         </div>
       </div>

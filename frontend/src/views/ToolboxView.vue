@@ -2,18 +2,20 @@
 import { computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
+import { useI18n } from '@/i18n';
 import GuideTooltip from '@/components/onboarding/GuideTooltip.vue';
 
 const router = useRouter();
 const moodTheme = useMoodThemeStore();
+const { t } = useI18n();
 
 const tools = computed(() => {
   const allTools = [
-    { icon: '📋', name: 'PHQ-9 自评', desc: '标准化抑郁筛查问卷，追踪症状变化', shortDesc: '了解你现在的状态', route: '/toolbox/phq9', lowEnergyFirst: false },
-    { icon: '🌬️', name: '呼吸引导', desc: '三种呼吸技巧，帮助你缓解焦虑', shortDesc: '跟着圆圈呼吸就好', route: '/toolbox/breathing', lowEnergyFirst: true },
-    { icon: '🌍', name: '扎根练习 5-4-3-2-1', desc: '用五感把自己拉回当下', shortDesc: '用五感回到当下', route: '/toolbox/grounding', lowEnergyFirst: false },
-    { icon: '🔍', name: '想法检验', desc: '认知行为疗法：检验自动化消极想法', shortDesc: '检验消极想法', route: '/toolbox/cognitive', lowEnergyFirst: false },
-    { icon: '📞', name: '988 电话准备', desc: '整理你的感受和症状，降低求助焦虑', shortDesc: '帮你准备好打电话', route: '/toolbox/crisis-prep', lowEnergyFirst: false, isCrisis: true },
+    { icon: '📋', name: t('toolbox.tools.phq9.name'), desc: t('toolbox.tools.phq9.desc'), shortDesc: t('toolbox.tools.phq9.shortDesc'), route: '/toolbox/phq9', lowEnergyFirst: false },
+    { icon: '🌬️', name: t('toolbox.tools.breathing.name'), desc: t('toolbox.tools.breathing.desc'), shortDesc: t('toolbox.tools.breathing.shortDesc'), route: '/toolbox/breathing', lowEnergyFirst: true },
+    { icon: '🌍', name: t('toolbox.tools.grounding.name'), desc: t('toolbox.tools.grounding.desc'), shortDesc: t('toolbox.tools.grounding.shortDesc'), route: '/toolbox/grounding', lowEnergyFirst: false },
+    { icon: '🔍', name: t('toolbox.tools.cognitive.name'), desc: t('toolbox.tools.cognitive.desc'), shortDesc: t('toolbox.tools.cognitive.shortDesc'), route: '/toolbox/cognitive', lowEnergyFirst: false },
+    { icon: '📞', name: t('toolbox.tools.crisisPrep.name'), desc: t('toolbox.tools.crisisPrep.desc'), shortDesc: t('toolbox.tools.crisisPrep.shortDesc'), route: '/toolbox/crisis-prep', lowEnergyFirst: false, isCrisis: true },
   ];
 
   if (moodTheme.isLowEnergy) {
@@ -30,8 +32,8 @@ function getToolDesc(tool: typeof tools.value[number]) {
 <template>
   <div class="py-6 space-y-6">
     <div class="animate-float-in">
-      <h1 class="text-xl font-semibold" style="color: var(--text-primary);">🌿 工具箱</h1>
-      <p class="text-sm mt-1" style="color: var(--text-secondary);">这些工具随时可用，没有对错之分</p>
+      <h1 class="text-xl font-semibold" style="color: var(--text-primary);">🌿 {{ t('toolbox.title') }}</h1>
+      <p class="text-sm mt-1" style="color: var(--text-secondary);">{{ t('toolbox.subtitle') }}</p>
     </div>
 
     <!-- Low energy comfort message -->
@@ -45,7 +47,7 @@ function getToolDesc(tool: typeof tools.value[number]) {
         animationDelay: '0.05s',
       }"
     >
-      什么都不想做？也可以只是待在这里。
+      {{ t('toolbox.lowEnergyMsg') }}
     </div>
 
     <div id="toolbox-list" class="space-y-3">
@@ -73,7 +75,7 @@ function getToolDesc(tool: typeof tools.value[number]) {
           class="absolute top-2 right-3 text-[10px] px-2 py-0.5 rounded-full font-medium"
           :style="{ background: moodTheme.palette.accent, color: 'var(--text-inverse)' }"
         >
-          推荐
+          {{ t('common.recommend') }}
         </span>
       </button>
     </div>
@@ -88,16 +90,16 @@ function getToolDesc(tool: typeof tools.value[number]) {
     >
       <p class="text-sm" :style="{ color: moodTheme.palette.navActiveText }">
         {{ moodTheme.isLowEnergy
-          ? '打开这个页面，就已经迈出了一步。'
-          : '每一次使用工具，都是在花园里浇了一次水。哪怕只是打开看看，也算。'
+          ? t('toolbox.encourageLow')
+          : t('toolbox.encourageNormal')
         }}
       </p>
     </div>
     <!-- Onboarding tooltip -->
     <GuideTooltip
       tip-id="toolbox-breathing"
-      title="推荐从这里开始"
-      description="呼吸练习是最简单的自助方式，随时可以用。"
+      :title="t('toolbox.tooltipTitle')"
+      :description="t('toolbox.tooltipDesc')"
       target-selector="#toolbox-list"
       position="top"
     />

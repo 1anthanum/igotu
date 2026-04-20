@@ -3,6 +3,7 @@ import { ref, computed, nextTick, onMounted, watch } from 'vue';
 import { useChatStore } from '@/stores/chat';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useOpeningPreference } from '@/composables/useOpeningPreference';
+import { useI18n } from '@/i18n';
 import ChatMessage from '@/components/chat/ChatMessage.vue';
 import GrowthTree from '@/components/tree/GrowthTree.vue';
 import GuideTooltip from '@/components/onboarding/GuideTooltip.vue';
@@ -10,21 +11,49 @@ import GuideTooltip from '@/components/onboarding/GuideTooltip.vue';
 const chatStore = useChatStore();
 const moodTheme = useMoodThemeStore();
 const openingPref = useOpeningPreference();
+const { t } = useI18n();
 const input = ref('');
 const messagesContainer = ref<HTMLElement | null>(null);
 const showTree = ref(false);
+
+// ── Session rename ──
+const editingSessionId = ref<string | null>(null);
+const editingTitle = ref('');
+
+function startRenameSession(session: { id: string; title: string }) {
+  editingSessionId.value = session.id;
+  editingTitle.value = session.title === t('common.newConversation') ? '' : session.title;
+  nextTick(() => {
+    const el = document.querySelector('.session-rename-input') as HTMLInputElement;
+    el?.focus();
+    el?.select();
+  });
+}
+
+async function confirmRename(sessionId: string) {
+  const title = editingTitle.value.trim();
+  editingSessionId.value = null;
+  if (!title) return;
+  try {
+    await chatStore.renameSession(sessionId, title);
+  } catch { /* silent */ }
+}
+
+function cancelRename() {
+  editingSessionId.value = null;
+}
 
 /**
  * 开场建议标签（非强制，仅供参考）
  * 低能量模式显示更少更简的标签
  */
-const SUGGESTION_TAGS = [
-  { key: 'A', text: '脑子里很吵', icon: '🌀' },
-  { key: 'B', text: '什么都不想做', icon: '🫥' },
-  { key: 'C', text: '有件事让我难受', icon: '💔' },
-  { key: 'D', text: '说不清楚', icon: '🌫️' },
-  { key: 'E', text: '还行，聊聊', icon: '💬' },
-];
+const SUGGESTION_TAGS = computed(() => [
+  { key: 'A', text: t('chat.suggestions.A'), icon: '🌀' },
+  { key: 'B', text: t('chat.suggestions.B'), icon: '🫥' },
+  { key: 'C', text: t('chat.suggestions.C'), icon: '💔' },
+  { key: 'D', text: t('chat.suggestions.D'), icon: '🌫️' },
+  { key: 'E', text: t('chat.suggestions.E'), icon: '💬' },
+]);
 
 const showOpening = ref(false);
 
@@ -32,54 +61,54 @@ const showOpening = ref(false);
 const openingSuggestions = computed(() => {
   if (moodTheme.isLowEnergy) {
     return [
-      { key: 'low1', text: '嗯', icon: '💬' },
-      { key: 'low2', text: '陪着我', icon: '🫂' },
+      { key: 'low1', text: t('chat.suggestions.low1'), icon: '💬' },
+      { key: 'low2', text: t('chat.suggestions.low2'), icon: '🫂' },
     ];
   }
   // 如果用户上次选过某个标签，把它排到第一位
   const lastKey = openingPref.lastChoice.value;
   if (lastKey) {
-    const sorted = [...SUGGESTION_TAGS];
-    const idx = sorted.findIndex(t => t.key === lastKey);
+    const sorted = [...SUGGESTION_TAGS.value];
+    const idx = sorted.findIndex(tag => tag.key === lastKey);
     if (idx > 0) {
       const [item] = sorted.splice(idx, 1);
       sorted.unshift(item);
     }
     return sorted;
   }
-  return SUGGESTION_TAGS;
+  return SUGGESTION_TAGS.value;
 });
 
 /** 情绪自适应快捷回复（对话进行中时显示） */
 const quickReplies = computed(() => {
   if (moodTheme.isLowEnergy) {
     return [
-      { text: '嗯', icon: '💬' },
-      { text: '不想说话', icon: '🤫' },
-      { text: '陪着我就好', icon: '🫂' },
+      { text: t('chat.quickReplies.lowHmm'), icon: '💬' },
+      { text: t('chat.quickReplies.lowQuiet'), icon: '🤫' },
+      { text: t('chat.quickReplies.lowStay'), icon: '🫂' },
     ];
   }
   return [
-    { text: '今天还可以', icon: '🌤️' },
-    { text: '有些累', icon: '🍃' },
-    { text: '想聊聊', icon: '💭' },
-    { text: '需要帮助', icon: '🆘' },
+    { text: t('chat.quickReplies.ok'), icon: '🌤️' },
+    { text: t('chat.quickReplies.tired'), icon: '🍃' },
+    { text: t('chat.quickReplies.wantToTalk'), icon: '💭' },
+    { text: t('chat.quickReplies.needHelp'), icon: '🆘' },
   ];
 });
 
 /** 开场欢迎语 */
 const openingGreeting = computed(() => {
-  if (moodTheme.isLowEnergy) return '你来了就好。';
-  if (openingPref.hasPreference.value) return '又见面了。想聊什么都可以。';
-  return '你好。想聊什么，或者什么都不说也可以。';
+  if (moodTheme.isLowEnergy) return t('chat.greetingLow');
+  if (openingPref.hasPreference.value) return t('chat.greetingReturning');
+  return t('chat.greetingNew');
 });
 
 const inputPlaceholder = computed(() => {
   if (showOpening.value && chatStore.messages.length === 0) {
-    return moodTheme.isLowEnergy ? '想说什么就说…' : '直接打字，或者点下面的标签…';
+    return moodTheme.isLowEnergy ? t('chat.placeholderOpeningLow') : t('chat.placeholderOpening');
   }
-  if (moodTheme.isLowEnergy) return '打字或者点上面的…';
-  return '在这里，慢慢说...';
+  if (moodTheme.isLowEnergy) return t('chat.placeholderActiveLow');
+  return t('chat.placeholderActive');
 });
 
 onMounted(async () => {
@@ -107,7 +136,7 @@ async function sendMessage(text?: string) {
     showOpening.value = false;
 
     // 记忆用户偏好
-    const matchedTag = SUGGESTION_TAGS.find(t => t.text === content);
+    const matchedTag = SUGGESTION_TAGS.value.find(tag => tag.text === content);
     if (matchedTag) {
       openingPref.setChoice(matchedTag.key);
     } else {
@@ -157,14 +186,14 @@ async function loadSession(sessionId: string) {
           🌱
         </div>
         <div>
-          <h1 class="text-sm font-medium" style="color: var(--text-primary);">小树</h1>
+          <h1 class="text-sm font-medium" style="color: var(--text-primary);">{{ t('chat.botName') }}</h1>
           <div class="flex items-center gap-1">
             <span
               class="w-1.5 h-1.5 rounded-full"
               :style="{ background: moodTheme.palette.accent }"
               style="animation: bio-breathe 2s ease-in-out infinite;"
             />
-            <span class="text-[10px]" style="color: var(--text-muted);">在线陪伴</span>
+            <span class="text-[10px]" style="color: var(--text-muted);">{{ t('chat.botStatus') }}</span>
           </div>
         </div>
       </div>
@@ -174,7 +203,7 @@ async function loadSession(sessionId: string) {
           @click="showTree = !showTree"
           class="text-lg transition-all"
           :style="{ opacity: showTree ? 1 : 0.5, transform: showTree ? 'scale(1.1)' : 'scale(1)' }"
-          title="成长树"
+          :title="t('chat.treeTitle')"
         >
           🌳
         </button>
@@ -184,7 +213,7 @@ async function loadSession(sessionId: string) {
           class="text-sm transition-colors"
           :style="{ color: moodTheme.palette.accent }"
         >
-          + 新对话
+          + {{ t('common.newChat') }}
         </button>
       </div>
     </div>
@@ -201,18 +230,46 @@ async function loadSession(sessionId: string) {
     <!-- Session list (only when tree is hidden) -->
     <div v-else-if="chatStore.sessions.length > 1" class="mb-3">
       <div class="flex gap-2 overflow-x-auto pb-1">
-        <button
-          v-for="session in chatStore.sessions.slice(0, 5)"
-          :key="session.id"
-          @click="loadSession(session.id)"
-          class="px-3 py-1 text-xs rounded-full whitespace-nowrap transition-all"
-          :style="session.id === chatStore.currentSessionId
-            ? { background: moodTheme.palette.navActive, color: moodTheme.palette.navActiveText, border: `1px solid ${moodTheme.palette.accent}40` }
-            : { background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }"
-        >
-          {{ session.title }}
-        </button>
+        <template v-for="session in chatStore.sessions.slice(0, 5)" :key="session.id">
+          <!-- Inline rename input -->
+          <form
+            v-if="editingSessionId === session.id"
+            @submit.prevent="confirmRename(session.id)"
+            class="flex-shrink-0"
+          >
+            <input
+              v-model="editingTitle"
+              @blur="confirmRename(session.id)"
+              @keydown.esc="cancelRename"
+              class="session-rename-input px-3 py-1 text-xs rounded-full whitespace-nowrap w-32"
+              :style="{
+                background: moodTheme.palette.navActive,
+                color: moodTheme.palette.navActiveText,
+                border: `1px solid ${moodTheme.palette.accent}`,
+                outline: 'none',
+              }"
+              :placeholder="t('chat.renamePlaceholder')"
+              maxlength="20"
+            />
+          </form>
+          <!-- Normal session tab: click to load, double-click to rename -->
+          <button
+            v-else
+            @click="loadSession(session.id)"
+            @dblclick.stop="startRenameSession(session)"
+            class="px-3 py-1 text-xs rounded-full whitespace-nowrap transition-all flex-shrink-0"
+            :style="session.id === chatStore.currentSessionId
+              ? { background: moodTheme.palette.navActive, color: moodTheme.palette.navActiveText, border: `1px solid ${moodTheme.palette.accent}40` }
+              : { background: 'var(--bg-card)', color: 'var(--text-muted)', border: '1px solid var(--border-subtle)' }"
+            :title="t('chat.doubleClickRename')"
+          >
+            {{ session.title }}
+          </button>
+        </template>
       </div>
+      <p v-if="chatStore.sessions.length > 1" class="text-[10px] mt-1" style="color: var(--text-muted); opacity: 0.5;">
+        {{ t('chat.tagHint') }}
+      </p>
     </div>
 
     <!-- Messages area -->
@@ -228,7 +285,7 @@ async function loadSession(sessionId: string) {
           </div>
           <p class="text-base" style="color: var(--text-primary);">{{ openingGreeting }}</p>
           <p v-if="!moodTheme.isLowEnergy" class="text-xs mt-1" style="color: var(--text-muted);">
-            可以选下面的标签，也可以直接打字
+            {{ t('chat.tagHint') }}
           </p>
         </div>
 
@@ -322,19 +379,19 @@ async function loadSession(sessionId: string) {
           :disabled="!input.trim() || chatStore.sending"
           class="btn-primary px-4 disabled:opacity-40"
         >
-          发送
+          {{ t('common.send') }}
         </button>
       </form>
       <p class="text-[10px] text-center mt-2" style="color: var(--text-muted);">
-        AI 对话不替代专业医疗。如需紧急帮助，请拨打 400-161-9995
+        {{ t('chat.disclaimer') }}
       </p>
     </div>
 
     <!-- Onboarding tooltips -->
     <GuideTooltip
       tip-id="chat-tree"
-      title="成长树"
-      description="你的每次对话都会成为树上的一个节点，记录你的成长。"
+      :title="t('chat.treeTooltipTitle')"
+      :description="t('chat.treeTooltipDesc')"
       target-selector="#btn-tree-toggle"
       position="bottom"
     />

@@ -3,14 +3,15 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
+import { useI18n } from '@/i18n';
 
 const router = useRouter();
 const auth = useAuthStore();
 const moodTheme = useMoodThemeStore();
+const { t } = useI18n();
 const dismissed = ref(false);
 
 function goRegister() {
-  auth.exitDemo();
   router.push('/login');
 }
 </script>
@@ -24,14 +25,14 @@ function goRegister() {
         :style="{ borderColor: moodTheme.palette.accent + '30' }"
       >
         <span class="banner-text">
-          🌿 你正在体验模式 · 数据不会保存
+          {{ t('demoBanner.text') }}
         </span>
         <button
           class="banner-register"
           :style="{ color: moodTheme.palette.accent }"
           @click="goRegister"
         >
-          注册以保存记录
+          {{ t('demoBanner.register') }}
         </button>
         <button class="banner-close" @click="dismissed = true">✕</button>
       </div>

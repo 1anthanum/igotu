@@ -1,30 +1,33 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
+import { useI18n } from '@/i18n';
 import CrisisPrepResult from './CrisisPrepResult.vue';
 
 const moodTheme = useMoodThemeStore();
+const { t } = useI18n();
 
 // ── Step flow ──
 const currentStep = ref(1);
 const showResult = ref(false);
 
 // ── Step 1: Symptoms ──
-const SYMPTOM_OPTIONS = [
-  { id: 'anxiety', label: '焦虑不安', emoji: '😰' },
-  { id: 'insomnia', label: '失眠/睡眠困难', emoji: '🌙' },
-  { id: 'fatigue', label: '持续疲惫/无力感', emoji: '😴' },
-  { id: 'mood_swings', label: '情绪波动大', emoji: '🎭' },
-  { id: 'self_criticism', label: '过度自我否定', emoji: '💭' },
-  { id: 'appetite', label: '食欲明显变化', emoji: '🍽️' },
-  { id: 'concentration', label: '注意力难以集中', emoji: '🧠' },
-  { id: 'withdrawal', label: '不想与人交流', emoji: '🚪' },
-  { id: 'hopelessness', label: '感到绝望', emoji: '🌑' },
-  { id: 'crying', label: '频繁哭泣', emoji: '😢' },
-  { id: 'panic', label: '恐慌/惊恐发作', emoji: '💥' },
-  { id: 'numbness', label: '情感麻木', emoji: '🧊' },
-  { id: 'self_harm_thoughts', label: '有自我伤害的想法', emoji: '⚠️' },
-];
+const symptomOptions = computed(() => [
+  { id: 'anxiety', label: t('crisisPrep.symptoms.anxiety'), emoji: '😰' },
+  { id: 'insomnia', label: t('crisisPrep.symptoms.insomnia'), emoji: '🌙' },
+  { id: 'fatigue', label: t('crisisPrep.symptoms.fatigue'), emoji: '😴' },
+  { id: 'mood_swings', label: t('crisisPrep.symptoms.moodSwings'), emoji: '🎭' },
+  { id: 'self_criticism', label: t('crisisPrep.symptoms.selfCriticism'), emoji: '💭' },
+  { id: 'appetite', label: t('crisisPrep.symptoms.appetite'), emoji: '🍽️' },
+  { id: 'concentration', label: t('crisisPrep.symptoms.concentration'), emoji: '🧠' },
+  { id: 'withdrawal', label: t('crisisPrep.symptoms.withdrawal'), emoji: '🚪' },
+  { id: 'hopelessness', label: t('crisisPrep.symptoms.hopelessness'), emoji: '🌑' },
+  { id: 'crying', label: t('crisisPrep.symptoms.crying'), emoji: '😢' },
+  { id: 'panic', label: t('crisisPrep.symptoms.panic'), emoji: '💥' },
+  { id: 'numbness', label: t('crisisPrep.symptoms.numbness'), emoji: '🧊' },
+  { id: 'self_harm_thoughts', label: t('crisisPrep.symptoms.selfHarmThoughts'), emoji: '⚠️' },
+]);
+const SYMPTOM_OPTIONS = computed(() => symptomOptions.value);
 const selectedSymptoms = ref<string[]>([]);
 
 function toggleSymptom(id: string) {
@@ -38,30 +41,33 @@ type Severity = 'mild' | 'moderate' | 'severe';
 const severityMap = ref<Record<string, Severity>>({});
 const durationDays = ref(7);
 
-const SEVERITY_OPTIONS: { value: Severity; label: string; color: string }[] = [
-  { value: 'mild', label: '轻度', color: '#10b981' },
-  { value: 'moderate', label: '中度', color: '#f59e0b' },
-  { value: 'severe', label: '严重', color: '#ef4444' },
-];
+const severityOptions = computed(() => [
+  { value: 'mild' as Severity, label: t('crisisPrep.severity.mild'), color: '#10b981' },
+  { value: 'moderate' as Severity, label: t('crisisPrep.severity.moderate'), color: '#f59e0b' },
+  { value: 'severe' as Severity, label: t('crisisPrep.severity.severe'), color: '#ef4444' },
+]);
+const SEVERITY_OPTIONS = computed(() => severityOptions.value);
 
-const DURATION_OPTIONS = [
-  { days: 1, label: '1天以内' },
-  { days: 3, label: '2-3天' },
-  { days: 7, label: '约一周' },
-  { days: 14, label: '两周左右' },
-  { days: 30, label: '一个月以上' },
-];
+const durationOptions = computed(() => [
+  { days: 1, label: t('crisisPrep.duration.d1') },
+  { days: 3, label: t('crisisPrep.duration.d3') },
+  { days: 7, label: t('crisisPrep.duration.d7') },
+  { days: 14, label: t('crisisPrep.duration.d14') },
+  { days: 30, label: t('crisisPrep.duration.d30') },
+]);
+const DURATION_OPTIONS = computed(() => durationOptions.value);
 
 // ── Step 3: Trigger ──
 const triggerText = ref('');
 
 // ── Step 4: Goals ──
-const GOAL_OPTIONS = [
-  { id: 'listen', label: '希望有人倾听', emoji: '👂' },
-  { id: 'coping', label: '需要应对策略', emoji: '🛠️' },
-  { id: 'assess', label: '评估是否需要专业帮助', emoji: '🏥' },
-  { id: 'safety', label: '有自我伤害的想法，需要支持', emoji: '🆘' },
-];
+const goalOptions = computed(() => [
+  { id: 'listen', label: t('crisisPrep.goals.listen'), emoji: '👂' },
+  { id: 'coping', label: t('crisisPrep.goals.coping'), emoji: '🛠️' },
+  { id: 'assess', label: t('crisisPrep.goals.assess'), emoji: '🏥' },
+  { id: 'safety', label: t('crisisPrep.goals.safety'), emoji: '🆘' },
+]);
+const GOAL_OPTIONS = computed(() => goalOptions.value);
 const selectedGoals = ref<string[]>([]);
 
 function toggleGoal(id: string) {
@@ -102,12 +108,12 @@ function prevStep() {
 // ── Build prep data for result ──
 const prepData = computed(() => ({
   symptoms: selectedSymptoms.value.map(id => ({
-    ...SYMPTOM_OPTIONS.find(s => s.id === id)!,
+    ...SYMPTOM_OPTIONS.value.find(s => s.id === id)!,
     severity: severityMap.value[id] || 'moderate',
   })),
   durationDays: durationDays.value,
   trigger: triggerText.value.trim(),
-  goals: selectedGoals.value.map(id => GOAL_OPTIONS.find(g => g.id === id)!),
+  goals: selectedGoals.value.map(id => GOAL_OPTIONS.value.find(g => g.id === id)!),
 }));
 
 function startOver() {
@@ -122,11 +128,13 @@ function startOver() {
 </script>
 
 <template>
-  <div class="crisis-prep-page pt-4 pb-24">
+  <div class="tool-page">
+    <div class="tool-bg crisis-bg" />
+    <div class="crisis-prep-page pt-4 pb-24 relative z-10">
     <!-- Safety banner -->
     <div class="safety-banner animate-float-in">
       <span class="safety-icon">⚠️</span>
-      <p>如果你正处于紧急危险中，请<strong>立即拨打 988 或 911</strong></p>
+      <p v-html="t('crisisPrep.safetyBanner')"></p>
     </div>
 
     <!-- Show result or steps -->
@@ -140,10 +148,10 @@ function startOver() {
       <!-- Header -->
       <div class="prep-header animate-float-in">
         <h1 class="text-lg font-medium" style="color: var(--text-primary);">
-          📞 988 电话准备
+          📞 {{ t('crisisPrep.title') }}
         </h1>
         <p class="text-xs mt-1" style="color: var(--text-muted);">
-          帮你整理想法，降低打电话的焦虑
+          {{ t('crisisPrep.subtitle') }}
         </p>
       </div>
 
@@ -159,8 +167,8 @@ function startOver() {
       <div class="step-container">
         <!-- Step 1: Symptoms -->
         <div v-if="currentStep === 1" class="step animate-float-in" key="s1">
-          <h2 class="step-title">你最近有哪些感受？</h2>
-          <p class="step-hint">选择所有符合的（可多选）</p>
+          <h2 class="step-title">{{ t('crisisPrep.step1Title') }}</h2>
+          <p class="step-hint">{{ t('crisisPrep.step1Hint') }}</p>
           <div class="symptom-grid">
             <button
               v-for="opt in SYMPTOM_OPTIONS"
@@ -180,7 +188,7 @@ function startOver() {
 
         <!-- Step 2: Severity & Duration -->
         <div v-if="currentStep === 2" class="step animate-float-in" key="s2">
-          <h2 class="step-title">程度和持续时间</h2>
+          <h2 class="step-title">{{ t('crisisPrep.step2Title') }}</h2>
 
           <div class="severity-section">
             <div
@@ -189,8 +197,8 @@ function startOver() {
               class="severity-row"
             >
               <span class="severity-label">
-                {{ SYMPTOM_OPTIONS.find(s => s.id === id)?.emoji }}
-                {{ SYMPTOM_OPTIONS.find(s => s.id === id)?.label }}
+                {{ SYMPTOM_OPTIONS.find((s: any) => s.id === id)?.emoji }}
+                {{ SYMPTOM_OPTIONS.find((s: any) => s.id === id)?.label }}
               </span>
               <div class="severity-btns">
                 <button
@@ -208,7 +216,7 @@ function startOver() {
           </div>
 
           <div class="duration-section">
-            <p class="step-hint mt-4">持续了多久？</p>
+            <p class="step-hint mt-4">{{ t('crisisPrep.step2Duration') }}</p>
             <div class="duration-options">
               <button
                 v-for="dur in DURATION_OPTIONS"
@@ -228,12 +236,12 @@ function startOver() {
 
         <!-- Step 3: Trigger -->
         <div v-if="currentStep === 3" class="step animate-float-in" key="s3">
-          <h2 class="step-title">有什么事触发了这些感受吗？</h2>
-          <p class="step-hint">这是可选的，写不出来也没关系</p>
+          <h2 class="step-title">{{ t('crisisPrep.step3Title') }}</h2>
+          <p class="step-hint">{{ t('crisisPrep.step3Hint') }}</p>
           <textarea
             v-model="triggerText"
             class="trigger-textarea input-field"
-            placeholder="比如：最近工作压力很大 / 和家人发生了冲突 / 不确定原因..."
+            :placeholder="t('crisisPrep.step3Placeholder')"
             rows="4"
             maxlength="200"
           />
@@ -244,8 +252,8 @@ function startOver() {
 
         <!-- Step 4: Goals -->
         <div v-if="currentStep === 4" class="step animate-float-in" key="s4">
-          <h2 class="step-title">你希望通过这个电话得到什么？</h2>
-          <p class="step-hint">选择最符合的（可多选）</p>
+          <h2 class="step-title">{{ t('crisisPrep.step4Title') }}</h2>
+          <p class="step-hint">{{ t('crisisPrep.step4Hint') }}</p>
           <div class="goal-options">
             <button
               v-for="opt in GOAL_OPTIONS"
@@ -266,26 +274,46 @@ function startOver() {
 
       <!-- Navigation buttons -->
       <div class="step-nav">
-        <button v-if="currentStep > 1" class="btn-secondary" @click="prevStep">上一步</button>
+        <button v-if="currentStep > 1" class="btn-secondary" @click="prevStep">{{ t('common.prev') }}</button>
         <div v-else />
         <button
           class="btn-primary"
           :disabled="!canProceed"
           @click="nextStep"
         >
-          {{ currentStep === 4 ? '生成准备信息' : '下一步' }}
+          {{ currentStep === 4 ? t('crisisPrep.generateBtn') : t('common.next') }}
         </button>
       </div>
     </template>
 
     <!-- Disclaimer -->
     <p class="disclaimer">
-      此工具帮助你整理想法，不替代专业评估。所有信息仅在你的设备上处理，不会上传到任何服务器。
+      {{ t('crisisPrep.disclaimer') }}
     </p>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.tool-page {
+  position: relative;
+  min-height: 100vh;
+}
+.tool-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.crisis-bg {
+  background: radial-gradient(
+    ellipse at 50% 100%,
+    rgba(219, 39, 119, 0.08) 0%,
+    rgba(219, 39, 119, 0.03) 35%,
+    transparent 70%
+  );
+}
+
 .crisis-prep-page { max-width: 500px; margin: 0 auto; }
 
 .safety-banner {

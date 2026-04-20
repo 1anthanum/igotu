@@ -11,7 +11,9 @@
 import { ref, computed } from 'vue';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useTherapyBridge, type TherapySummary } from '@/composables/useTherapyBridge';
+import { useI18n } from '@/i18n';
 
+const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 const therapy = useTherapyBridge();
 
@@ -68,11 +70,11 @@ async function copySummary() {
 
 // ── Mood emoji helper ──
 const MOOD_EMOJI: Record<number, string> = { 1: '😢', 2: '😕', 3: '😐', 4: '🙂', 5: '😊' };
-const DAY_NAMES = ['日', '一', '二', '三', '四', '五', '六'];
+const DAY_NAMES = computed(() => t('therapy.dayNames') as unknown as string[]);
 
 function formatDate(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00');
-  return `周${DAY_NAMES[d.getDay()]}`;
+  return t('therapy.dayPrefix', { day: DAY_NAMES.value[d.getDay()] });
 }
 </script>
 
@@ -80,12 +82,12 @@ function formatDate(dateStr: string): string {
   <div class="pt-6 space-y-5">
     <!-- Header -->
     <div class="animate-float-in">
-      <router-link to="/" class="text-xs" style="color: var(--text-muted);">← 首页</router-link>
+      <router-link to="/" class="text-xs" style="color: var(--text-muted);">← {{ t('therapy.backHome') }}</router-link>
       <h1 class="text-xl font-medium mt-2" style="color: var(--text-primary);">
-        🌉 治疗桥梁
+        🌉 {{ t('therapy.title') }}
       </h1>
       <p class="text-xs mt-1" style="color: var(--text-muted);">
-        连接你和治疗师之间的每一天
+        {{ t('therapy.subtitle') }}
       </p>
     </div>
 
@@ -96,7 +98,7 @@ function formatDate(dateStr: string): string {
         :style="activeTab === 'homework' ? { color: moodTheme.palette.navActiveText, borderColor: moodTheme.palette.accent } : {}"
         @click="activeTab = 'homework'"
       >
-        📝 治疗作业
+        📝 {{ t('therapy.tabHomework') }}
         <span v-if="therapy.activeHomework.value.length > 0" class="tab-badge">
           {{ therapy.activeHomework.value.length }}
         </span>
@@ -106,7 +108,7 @@ function formatDate(dateStr: string): string {
         :style="activeTab === 'summary' ? { color: moodTheme.palette.navActiveText, borderColor: moodTheme.palette.accent } : {}"
         @click="activeTab = 'summary'"
       >
-        📋 本周摘要
+        📋 {{ t('therapy.tabSummary') }}
       </button>
     </div>
 
@@ -117,13 +119,13 @@ function formatDate(dateStr: string): string {
       <!-- Add homework -->
       <div class="card">
         <p class="text-xs mb-2" style="color: var(--text-muted);">
-          记录治疗师给你的练习、思考题或日常任务
+          {{ t('therapy.hwDesc') }}
         </p>
         <div class="hw-input-row">
           <input
             v-model="newHomeworkText"
             type="text"
-            placeholder="例如：每天记录三件好事"
+            :placeholder="t('therapy.hwPlaceholder')"
             maxlength="200"
             class="hw-input"
             @keyup.enter="addHomework"
@@ -161,7 +163,7 @@ function formatDate(dateStr: string): string {
                   <input
                     v-model="noteInput"
                     type="text"
-                    placeholder="添加笔记..."
+                    :placeholder="t('therapy.noteHint')"
                     class="hw-note-input"
                     @keyup.enter="saveNote(hw.id)"
                   />
@@ -173,7 +175,7 @@ function formatDate(dateStr: string): string {
                   📝 {{ hw.note }}
                 </p>
                 <button v-else class="hw-add-note" @click="startNoteEdit(hw.id)">
-                  + 添加笔记
+                  + {{ t('therapy.addNote') }}
                 </button>
               </template>
             </div>
@@ -184,7 +186,7 @@ function formatDate(dateStr: string): string {
       <!-- Done homework (collapsible) -->
       <details v-if="therapy.doneHomework.value.length > 0" class="done-section">
         <summary class="done-summary" style="color: var(--text-muted);">
-          ✅ 已完成 ({{ therapy.doneHomework.value.length }})
+          ✅ {{ t('therapy.completed', { count: therapy.doneHomework.value.length }) }}
         </summary>
         <div class="space-y-2 mt-2">
           <div
@@ -213,9 +215,9 @@ function formatDate(dateStr: string): string {
       <!-- Empty state -->
       <div v-if="therapy.homework.value.length === 0" class="empty-state">
         <div class="text-2xl mb-2">📝</div>
-        <p class="text-sm" style="color: var(--text-secondary);">还没有治疗作业</p>
+        <p class="text-sm" style="color: var(--text-secondary);">{{ t('therapy.emptyHw') }}</p>
         <p class="text-xs" style="color: var(--text-muted);">
-          下次治疗后，把你的练习记在这里
+          {{ t('therapy.emptyHwHint') }}
         </p>
       </div>
     </div>
@@ -231,14 +233,14 @@ function formatDate(dateStr: string): string {
             <h3 class="text-sm font-medium" style="color: var(--text-primary);">
               {{ summary.weekStart }} ~ {{ summary.weekEnd }}
             </h3>
-            <p class="text-xs" style="color: var(--text-muted);">自动生成的本周情绪摘要</p>
+            <p class="text-xs" style="color: var(--text-muted);">{{ t('therapy.summaryAutoGen') }}</p>
           </div>
           <button
             class="copy-btn"
             :style="{ background: moodTheme.palette.navActive, color: moodTheme.palette.navActiveText }"
             @click="copySummary"
           >
-            {{ copySuccess ? '✓ 已复制' : '📋 复制' }}
+            {{ copySuccess ? t('therapy.copied') : t('therapy.copy') }}
           </button>
         </div>
 
@@ -261,7 +263,7 @@ function formatDate(dateStr: string): string {
 
         <!-- Overall -->
         <div v-if="summary.overallAvg > 0" class="overall-mood">
-          <span>平均情绪：</span>
+          <span>{{ t('therapy.avgMood') }}</span>
           <span :style="{ color: moodTheme.palette.accent }">
             {{ MOOD_EMOJI[Math.round(summary.overallAvg)] }} {{ summary.overallAvg.toFixed(1) }}
           </span>
@@ -270,7 +272,7 @@ function formatDate(dateStr: string): string {
 
       <!-- Tools used -->
       <div v-if="Object.keys(summary.toolFrequency).length > 0" class="card">
-        <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary);">🧰 使用的工具</h3>
+        <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary);">🧰 {{ t('therapy.usedTools') }}</h3>
         <div class="tool-chips">
           <span
             v-for="(count, tool) in summary.toolFrequency"
@@ -285,7 +287,7 @@ function formatDate(dateStr: string): string {
 
       <!-- Homework progress -->
       <div v-if="summary.homeworkTotal > 0" class="card">
-        <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary);">📝 治疗作业进度</h3>
+        <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary);">📝 {{ t('therapy.hwProgress') }}</h3>
         <div class="hw-progress">
           <div class="hw-progress-bar">
             <div
@@ -304,7 +306,7 @@ function formatDate(dateStr: string): string {
 
       <!-- Highlights -->
       <div v-if="summary.topHighlights.length > 0" class="card">
-        <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary);">✨ 亮点</h3>
+        <h3 class="text-sm font-medium mb-2" style="color: var(--text-primary);">✨ {{ t('therapy.highlights') }}</h3>
         <ul class="highlight-list">
           <li v-for="(h, i) in summary.topHighlights" :key="i" class="highlight-item">
             {{ h }}
@@ -315,15 +317,15 @@ function formatDate(dateStr: string): string {
       <!-- Empty summary state -->
       <div v-if="summary.overallAvg === 0 && summary.homeworkTotal === 0" class="empty-state">
         <div class="text-2xl mb-2">📋</div>
-        <p class="text-sm" style="color: var(--text-secondary);">本周还没有记录</p>
+        <p class="text-sm" style="color: var(--text-secondary);">{{ t('therapy.emptySummary') }}</p>
         <p class="text-xs" style="color: var(--text-muted);">
-          使用 app 的记录会自动出现在这里
+          {{ t('therapy.emptySummaryHint') }}
         </p>
       </div>
 
       <!-- Disclaimer -->
       <p class="text-[10px] text-center" style="color: var(--text-muted); opacity: 0.5;">
-        此摘要仅供个人参考，不是医疗报告
+        {{ t('therapy.disclaimer') }}
       </p>
     </div>
   </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useMoodCheckIn } from '@/composables/useMoodCheckIn';
@@ -11,10 +12,27 @@ import MoodCheckIn from '@/components/mood/MoodCheckIn.vue';
 import MoodThresholdPanel from '@/components/mood/MoodThresholdPanel.vue';
 import DemoBanner from '@/components/demo/DemoBanner.vue';
 
+const router = useRouter();
 const auth = useAuthStore();
 const moodTheme = useMoodThemeStore();
 const checkIn = useMoodCheckIn();
 const showCheckIn = ref(false);
+
+/** Direction-aware page transitions */
+const transitionName = ref('page');
+
+router.afterEach((to, from) => {
+  const toDepth = (to.meta?.depth as number) ?? 0;
+  const fromDepth = (from.meta?.depth as number) ?? 0;
+
+  if (toDepth > fromDepth) {
+    transitionName.value = 'slide-forward';   // drilling in → slide from right
+  } else if (toDepth < fromDepth) {
+    transitionName.value = 'slide-back';      // going back → slide from left
+  } else {
+    transitionName.value = 'page-cross';      // sibling → crossfade
+  }
+});
 
 onMounted(() => {
   moodTheme.init();
@@ -37,16 +55,16 @@ function onCheckInDone(score: number) {
     <GradientMesh />
 
     <AppHeader v-if="auth.isAuthenticated" />
-    <main class="max-w-2xl mx-auto px-4 pb-24 relative" style="z-index: 1;">
+    <main class="max-w-5xl mx-auto px-6 pb-24 relative" style="z-index: 1;">
       <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
+        <transition :name="transitionName" mode="out-in">
           <component :is="Component" />
         </transition>
       </router-view>
     </main>
 
-    <!-- Onboarding -->
-    <WelcomeModal v-if="auth.isAuthenticated" />
+    <!-- Onboarding (only for registered users, not demo) -->
+    <WelcomeModal v-if="auth.isAuthenticated && !auth.isDemo" />
 
     <!-- Mood check-in overlay -->
     <MoodCheckIn v-if="showCheckIn" @done="onCheckInDone" />

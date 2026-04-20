@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import { useI18n } from '@/i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 
 const router = useRouter();
+const { t } = useI18n();
 const auth = useAuthStore();
 const moodTheme = useMoodThemeStore();
 
@@ -28,9 +30,9 @@ function goLogin() {
         <br />
         IGOTU
       </h1>
-      <p class="hero-subtitle">你的情绪陪伴伙伴</p>
+      <p class="hero-subtitle">{{ t('demo.heroSubtitle') }}</p>
       <p class="hero-desc">
-        用色彩感知你的心情，用呼吸找回平静，用记录见证成长。
+        {{ t('demo.heroDesc') }}
       </p>
     </div>
 
@@ -39,22 +41,22 @@ function goLogin() {
       <div class="feature-item">
         <span class="feature-icon">🎨</span>
         <div>
-          <p class="feature-title">色彩随心情变化</p>
-          <p class="feature-desc">界面的颜色随你的感受呼吸</p>
+          <p class="feature-title">{{ t('demo.featureColor') }}</p>
+          <p class="feature-desc">{{ t('demo.featureColorDesc') }}</p>
         </div>
       </div>
       <div class="feature-item">
         <span class="feature-icon">🍃</span>
         <div>
-          <p class="feature-title">引导式放松</p>
-          <p class="feature-desc">呼吸练习和扎根技巧</p>
+          <p class="feature-title">{{ t('demo.featureRelax') }}</p>
+          <p class="feature-desc">{{ t('demo.featureRelaxDesc') }}</p>
         </div>
       </div>
       <div class="feature-item">
         <span class="feature-icon">📞</span>
         <div>
-          <p class="feature-title">988 电话准备</p>
-          <p class="feature-desc">帮你整理想法，降低求助焦虑</p>
+          <p class="feature-title">{{ t('demo.featureCrisis') }}</p>
+          <p class="feature-desc">{{ t('demo.featureCrisisDesc') }}</p>
         </div>
       </div>
     </div>
@@ -62,13 +64,13 @@ function goLogin() {
     <!-- CTA buttons -->
     <div class="cta-section animate-float-in-delay-2">
       <button class="btn-primary w-full" @click="startDemo">
-        快速体验
+        {{ t('demo.quickStart') }}
       </button>
       <button class="btn-secondary w-full mt-3" @click="goLogin">
-        登录 / 注册
+        {{ t('demo.loginRegister') }}
       </button>
       <p class="demo-note">
-        体验模式无需注册，但数据不会保存
+        {{ t('demo.demoNote') }}
       </p>
     </div>
   </div>

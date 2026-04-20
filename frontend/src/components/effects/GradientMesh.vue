@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 
 const moodTheme = useMoodThemeStore();
@@ -20,6 +20,23 @@ const orbStyle3 = computed(() => ({
   background: `radial-gradient(circle, ${moodTheme.palette.accent}04, transparent 70%)`,
   animationDuration: prefersReducedMotion || moodTheme.isLowEnergy ? '0s' : '20s',
 }));
+
+/* ── 点击涟漪响应 ── */
+interface Ripple { id: number; x: number; y: number; color: string }
+const ripples = ref<Ripple[]>([]);
+let rippleId = 0;
+
+function onDocClick(e: MouseEvent) {
+  if (prefersReducedMotion || moodTheme.isLowEnergy) return;
+  const id = ++rippleId;
+  ripples.value.push({ id, x: e.clientX, y: e.clientY, color: moodTheme.palette.accent });
+  setTimeout(() => {
+    ripples.value = ripples.value.filter(r => r.id !== id);
+  }, 1200);
+}
+
+onMounted(() => document.addEventListener('click', onDocClick, { passive: true }));
+onUnmounted(() => document.removeEventListener('click', onDocClick));
 </script>
 
 <template>
@@ -38,6 +55,14 @@ const orbStyle3 = computed(() => ({
     <div
       class="gradient-orb orb-3"
       :style="orbStyle3"
+    />
+
+    <!-- Click ripples -->
+    <div
+      v-for="r in ripples"
+      :key="r.id"
+      class="click-ripple"
+      :style="{ left: r.x + 'px', top: r.y + 'px', '--ripple-color': r.color }"
     />
   </div>
 </template>
@@ -91,7 +116,25 @@ const orbStyle3 = computed(() => ({
   100% { transform: translate(-40px, 30px) scale(0.93); }
 }
 
+/* ── 点击涟漪 ── */
+.click-ripple {
+  position: absolute;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, var(--ripple-color, #14b8a6)06, transparent 70%);
+  animation: ripple-expand 1.2s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes ripple-expand {
+  0%   { width: 0; height: 0; opacity: 0.5; }
+  100% { width: 400px; height: 400px; opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .gradient-orb { animation: none !important; }
+  .click-ripple { animation: none !important; display: none; }
 }
 </style>

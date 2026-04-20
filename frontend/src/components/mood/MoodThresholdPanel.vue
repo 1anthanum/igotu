@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore, MOOD_CONFIG } from '@/composables/useMoodTheme';
 import { useMoodCheckIn, type MoodSnapshot } from '@/composables/useMoodCheckIn';
 
+const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 const checkIn = useMoodCheckIn();
 const expanded = ref(false);
@@ -53,9 +55,9 @@ const sparklineDots = computed(() => {
 
 function triggerLabel(trigger: string): string {
   switch (trigger) {
-    case 'check_in': return '心情检测';
-    case 'boost': return '任务完成';
-    case 'ai_sync': return 'AI 联动';
+    case 'check_in': return t('moodThreshold.checkInLabel');
+    case 'boost': return t('moodThreshold.boostLabel');
+    case 'ai_sync': return t('moodThreshold.syncLabel');
     default: return '';
   }
 }
@@ -127,10 +129,10 @@ function formatTime(ts: number): string {
 
         <!-- Delta summary -->
         <div v-if="data" class="panel-delta-row">
-          <span class="delta-label">起始</span>
+          <span class="delta-label">{{ t('moodThreshold.startLabel') }}</span>
           <span class="delta-score">{{ data.startScore }}</span>
           <span class="delta-arrow">→</span>
-          <span class="delta-label">当前</span>
+          <span class="delta-label">{{ t('moodThreshold.currentLabel') }}</span>
           <span class="delta-score" :style="{ color: moodTheme.palette.accent }">{{ data.currentScore }}</span>
           <span
             v-if="data.delta !== 0"
@@ -156,7 +158,7 @@ function formatTime(ts: number): string {
         </div>
 
         <!-- No data yet -->
-        <p v-if="!data" class="no-data">完成心情检测后这里会显示变化</p>
+        <p v-if="!data" class="no-data">{{ t('moodThreshold.noDataHint') }}</p>
       </div>
     </transition>
   </div>

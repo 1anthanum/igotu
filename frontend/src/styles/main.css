@@ -34,13 +34,20 @@
   --text-muted: #3a7a64;
   --text-inverse: #060f0d;
 
-  /* 颜色过渡（AI 联动时动态设置） */
+  /* 颜色过渡（AI 联动 / 检测时动态设置）
+     色彩心理学：过渡时长 2.5s 模拟自然光变化（日出/日落节奏）
+     CSS transition 应用于所有 mood-* 变量依赖的属性 */
   --mood-transition: 0ms;
 
   /* 自适应系统（运行时由 JS 覆盖） */
   --mood-comfort-glow: transparent;
   --animation-speed: 1;
   --glow-intensity: 0.6;
+
+  /* 自适应排版（运行时由 JS 覆盖） */
+  --mood-font-weight: 400;
+  --mood-line-height: 1.7;
+  --mood-letter-spacing: 0em;
 }
 
 @layer base {
@@ -48,6 +55,16 @@
     @apply font-sans antialiased;
     background-color: var(--bg-primary);
     color: var(--text-primary);
+    font-weight: var(--mood-font-weight);
+    line-height: var(--mood-line-height);
+    letter-spacing: var(--mood-letter-spacing);
+    transition: font-weight 1.5s ease, line-height 1.5s ease, letter-spacing 1.5s ease;
+  }
+
+  /* 自适应排版：标题保持比正文更重的字重 */
+  h1, h2, h3 {
+    font-weight: calc(var(--mood-font-weight) + 200);
+    letter-spacing: calc(var(--mood-letter-spacing) - 0.01em);
   }
 
   ::-webkit-scrollbar { width: 6px; }
@@ -64,7 +81,7 @@
     border-radius: 1.25rem;
     padding: 1.5rem;
     backdrop-filter: blur(12px);
-    transition: border-color 0.3s, box-shadow 0.3s;
+    transition: border-color 0.3s, box-shadow 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: relative;
     overflow: hidden;
   }
@@ -78,7 +95,12 @@
   }
   .card:hover {
     border-color: var(--border-medium);
-    box-shadow: 0 0 40px var(--mood-glow);
+    transform: translateY(-2px);
+    box-shadow:
+      0 4px 12px rgba(0,0,0,0.25),
+      0 8px 32px rgba(0,0,0,0.15),
+      0 12px 40px var(--mood-glow),
+      0 2px 20px color-mix(in srgb, var(--mood-accent) 5%, transparent);
     animation: shimmer-card 2s ease-in-out;
   }
   .card:hover::before {
@@ -137,6 +159,7 @@
     border-color: var(--mood-accent);
     background: color-mix(in srgb, var(--mood-accent) 12%, transparent);
   }
+  .btn-secondary:active { transform: scale(0.96); }
 
   /* ── 幽灵按钮 ──────────────────────── */
   .btn-ghost {
@@ -146,6 +169,7 @@
     transition: all 0.2s;
   }
   .btn-ghost:hover { color: var(--text-primary); background: rgba(100,220,180,0.04); }
+  .btn-ghost:active { transform: scale(0.96); }
 
   /* ── 温柔退出按钮 ──────────────────── */
   .btn-safe-exit {
@@ -159,6 +183,7 @@
     color: var(--text-secondary);
     background: rgba(100,220,180,0.04);
   }
+  .btn-safe-exit:active { transform: scale(0.96); }
 
   /* ── 快速记录浮动按钮 ────────────────── */
   .btn-quick-log {
@@ -245,6 +270,22 @@
     background: linear-gradient(90deg, var(--mood-accent), transparent);
     opacity: 0.3;
   }
+
+  /* ── 全局微交互弹性反馈 ──────────────── */
+  button,
+  a,
+  [role="button"],
+  .template-chip,
+  .tab-selector button {
+    transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.15s ease,
+                border-color 0.3s, box-shadow 0.3s, background 0.2s, color 0.2s, filter 0.2s;
+  }
+
+  /* ── 卡片按压反馈 ──────────────────── */
+  .card:active {
+    transform: scale(0.985);
+    transition: transform 0.1s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
 }
 
 /* ══════════════════════════════════════════════════
@@ -267,6 +308,31 @@
 }
 .success-pop { animation: success-pop 0.6s ease-out forwards; }
 
+/* ── 页面过渡：前进（向左滑入） ── */
+.slide-forward-enter-active,
+.slide-forward-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.slide-forward-enter-from { opacity: 0; transform: translateX(40px) scale(0.97); }
+.slide-forward-leave-to { opacity: 0; transform: translateX(-20px) scale(0.99); }
+
+/* ── 页面过渡：后退（向右滑入） ── */
+.slide-back-enter-active,
+.slide-back-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.slide-back-enter-from { opacity: 0; transform: translateX(-40px) scale(0.97); }
+.slide-back-leave-to { opacity: 0; transform: translateX(20px) scale(0.99); }
+
+/* ── 页面过渡：同级交叉淡化 ── */
+.page-cross-enter-active,
+.page-cross-leave-active {
+  transition: opacity 0.25s ease;
+}
+.page-cross-enter-from { opacity: 0; }
+.page-cross-leave-to { opacity: 0; }
+
+/* ── 保留 page 作为 fallback ── */
 .page-enter-active,
 .page-leave-active {
   transition: opacity 0.3s ease, transform 0.3s ease;
@@ -370,12 +436,24 @@ body.low-energy::after {
 /* ── 动画减速 ── */
 body.low-energy .animate-float-in { animation-duration: 0.8s; }
 body.low-energy .page-enter-active,
-body.low-energy .page-leave-active { transition-duration: 0.4s; }
+body.low-energy .page-leave-active,
+body.low-energy .slide-forward-enter-active,
+body.low-energy .slide-forward-leave-active,
+body.low-energy .slide-back-enter-active,
+body.low-energy .slide-back-leave-active,
+body.low-energy .page-cross-enter-active,
+body.low-energy .page-cross-leave-active { transition-duration: 0.4s; }
 body.low-energy .animate-pulse-glow { animation-duration: 6s; }
 
-/* ── 卡片shimmer禁用 ── */
-body.low-energy .card:hover { animation: none; background-image: none; }
+/* ── 低能量模式禁用弹性交互 ── */
+body.low-energy button:active,
+body.low-energy a:active,
+body.low-energy [role="button"]:active { transform: none !important; }
+
+/* ── 卡片shimmer + 浮层禁用 ── */
+body.low-energy .card:hover { animation: none; background-image: none; transform: none; box-shadow: 0 0 40px var(--mood-glow); }
 body.low-energy .card:hover::before { animation: none; }
+body.low-energy .card:active { transform: none; }
 
 /* ── 触摸目标放大 ── */
 body.low-energy .btn-primary { min-height: 52px; }
@@ -410,5 +488,9 @@ body.low-energy {
 @media (prefers-reduced-motion: reduce) {
   .animate-float-in { animation: none !important; opacity: 1; transform: none; }
   .animate-pulse-glow { animation: none !important; }
-  .page-enter-active, .page-leave-active { transition: none !important; }
+  .page-enter-active, .page-leave-active,
+  .slide-forward-enter-active, .slide-forward-leave-active,
+  .slide-back-enter-active, .slide-back-leave-active,
+  .page-cross-enter-active, .page-cross-leave-active { transition: none !important; }
+  button, a, [role="button"], .card { transition: none !important; }
 }

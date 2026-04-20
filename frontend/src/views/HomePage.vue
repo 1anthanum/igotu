@@ -10,10 +10,12 @@
  */
 import { onMounted, computed } from 'vue';
 import { useRouter } from 'vue-router';
+import { useI18n } from '@/i18n';
 import { useAchievementStore } from '@/stores/achievements';
 import { useAnalyticsStore } from '@/stores/analytics';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useMoodCheckIn } from '@/composables/useMoodCheckIn';
+import { useMoodInsights } from '@/composables/useMoodInsights';
 import EncouragementCard from '@/components/encouragement/EncouragementCard.vue';
 import AchievementCard from '@/components/achievements/AchievementCard.vue';
 import HeatmapCalendar from '@/components/visualization/HeatmapCalendar.vue';
@@ -21,12 +23,16 @@ import GuideTooltip from '@/components/onboarding/GuideTooltip.vue';
 import QuickLogButton from '@/components/achievements/QuickLogButton.vue';
 import MoodGuidance from '@/components/mood/MoodGuidance.vue';
 import SanctuaryView from '@/components/sanctuary/SanctuaryView.vue';
+import EmotionPulse from '@/components/mood/EmotionPulse.vue';
+import InsightCards from '@/components/mood/InsightCards.vue';
 
 const router = useRouter();
+const { t } = useI18n();
 const achievements = useAchievementStore();
 const analytics = useAnalyticsStore();
 const moodTheme = useMoodThemeStore();
 const moodCheckIn = useMoodCheckIn();
+const moodInsights = useMoodInsights();
 
 function onGuidanceTaskDone(label: string) {
   const newScore = moodCheckIn.boostMood(moodTheme.currentMood, label);
@@ -35,30 +41,30 @@ function onGuidanceTaskDone(label: string) {
 
 const greeting = computed(() => {
   const h = new Date().getHours();
-  if (h < 6) return '夜深了';
-  if (h < 12) return '早上好';
-  if (h < 18) return '下午好';
-  return '晚上好';
+  if (h < 6) return t('home.nightGreeting');
+  if (h < 12) return t('home.morningGreeting');
+  if (h < 18) return t('home.afternoonGreeting');
+  return t('home.eveningGreeting');
 });
 
 const mainGreeting = computed(() => {
-  if (moodTheme.isLowEnergy) return '你来了就好。';
-  return '你今天还好吗？';
+  if (moodTheme.isLowEnergy) return t('home.mainGreetingLow');
+  return t('home.mainGreetingNormal');
 });
 
 /** Normal mode: quick tools */
 const quickTools = computed(() => [
-  { to: '/toolbox/breathing', icon: '🍃', label: '呼吸空间' },
-  { to: '/chat', icon: '💭', label: '和伙伴聊聊' },
-  { to: '/mood', icon: '🌿', label: '记录感受' },
+  { to: '/toolbox/breathing', icon: '🍃', label: t('home.toolBreathe') },
+  { to: '/chat', icon: '💭', label: t('home.toolChat') },
+  { to: '/mood', icon: '🌿', label: t('home.toolMood') },
 ]);
 
 const emptyHint = computed(() => {
-  return '点击右下角的 ✨ 种下第一颗种子';
+  return t('home.emptyHint');
 });
 
 const emptySubHint = computed(() => {
-  return '每一个微小的行动都在让你的花园生长';
+  return t('home.emptySubHint');
 });
 
 onMounted(async () => {
@@ -68,6 +74,9 @@ onMounted(async () => {
     achievements.loadCalendar(),
     analytics.loadEncouragement(),
   ]);
+
+  // Sync mood data for insights
+  moodInsights.syncToPersistent();
 
   // Check if returning from a guided task → boost mood
   const pendingTask = sessionStorage.getItem('igotu_guidance_task');
@@ -145,6 +154,9 @@ function onSanctuaryBreathe() {
           </router-link>
         </div>
 
+        <!-- Emotion insights -->
+        <InsightCards />
+
         <!-- Encouragement -->
         <EncouragementCard :messages="analytics.encouragement" />
 
@@ -152,7 +164,7 @@ function onSanctuaryBreathe() {
         <div class="card animate-float-in" style="animation-delay: 0.15s;">
           <div class="flex items-center justify-between mb-3">
             <h2 class="text-sm font-medium" style="color: var(--text-primary);">
-              🌱 今日种下的种子
+              🌱 {{ t('home.todaySeeds') }}
               <span v-if="achievements.todayCount > 0" class="ml-1" style="color: var(--mood-accent);">
                 {{ achievements.todayCount }}
               </span>
@@ -185,11 +197,14 @@ function onSanctuaryBreathe() {
         <!-- Quick log FAB -->
         <QuickLogButton />
 
+        <!-- Emotion pulse FAB -->
+        <EmotionPulse />
+
         <!-- Onboarding tooltip -->
         <GuideTooltip
           tip-id="home-tools"
-          title="快捷工具"
-          description="这些是你最常用的工具，可以快速访问。"
+          :title="t('home.tooltipTitle')"
+          :description="t('home.tooltipDesc')"
           target-selector="#home-quick-tools"
           position="bottom"
         />

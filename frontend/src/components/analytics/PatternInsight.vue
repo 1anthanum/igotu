@@ -1,5 +1,8 @@
 <script setup lang="ts">
+import { useI18n } from '@/i18n';
 import type { PatternInsight } from '@/types/api';
+
+const { t } = useI18n();
 
 defineProps<{
   insights: PatternInsight[];
@@ -8,7 +11,7 @@ defineProps<{
 
 <template>
   <div v-if="insights.length > 0" class="card">
-    <h3 class="text-sm font-semibold mb-3" style="color: var(--text-primary);">你的模式</h3>
+    <h3 class="text-sm font-semibold mb-3" style="color: var(--text-primary);">{{ t('analyticsSections.yourPatterns') }}</h3>
     <div class="space-y-3">
       <div
         v-for="(insight, i) in insights"

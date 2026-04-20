@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { ref, computed, onBeforeUnmount } from 'vue';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
-import { BLOOM_SIZE, RARE_BLOOM_CONFIG, type BloomStage, type RareBloomType } from '@/composables/useSessionTree';
+import { BLOOM_SIZE, RARE_BLOOM_CONFIG, type BloomStage, type RareBloomType, type NodeType } from '@/composables/useSessionTree';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   bloomStage: BloomStage;
   activityScore: number;
   title: string;
@@ -13,7 +13,10 @@ const props = defineProps<{
   rareBloomTypes: RareBloomType[];
   cx: number;
   cy: number;
-}>();
+  nodeType?: NodeType;
+}>(), {
+  nodeType: 'chat',
+});
 
 const emit = defineEmits<{
   click: [];
@@ -23,6 +26,11 @@ const emit = defineEmits<{
 const moodTheme = useMoodThemeStore();
 
 const radius = computed(() => BLOOM_SIZE[props.bloomStage]);
+const isExercise = computed(() => props.nodeType === 'exercise');
+
+/** 练习节点用蓝色系，对话节点用主题色 */
+const nodeColor = computed(() => isExercise.value ? '#60a5fa' : moodTheme.palette.accent);
+const nodeColorSoft = computed(() => isExercise.value ? '#60a5fa' : moodTheme.palette.navActiveText);
 
 const glowOpacity = computed(() => {
   const base = props.activityScore / 100;
@@ -122,7 +130,7 @@ onBeforeUnmount(() => {
     <!-- Glow halo -->
     <circle
       :r="radius * 2"
-      :fill="moodTheme.palette.accent"
+      :fill="nodeColor"
       :opacity="glowOpacity * 0.3"
       :style="isActive ? `filter: blur(${radius}px);` : `filter: blur(${radius * 0.7}px);`"
     />
@@ -130,13 +138,24 @@ onBeforeUnmount(() => {
     <!-- Main node -->
     <circle
       :r="radius"
-      :fill="moodTheme.palette.accent"
+      :fill="nodeColor"
       :opacity="fillOpacity"
-      :stroke="isActive ? moodTheme.palette.navActiveText : 'none'"
+      :stroke="isActive ? nodeColorSoft : 'none'"
       :stroke-width="isActive ? 2 : 0"
       class="transition-all"
       style="transition: r 0.5s, opacity 0.5s;"
     />
+
+    <!-- Exercise node icon (small wind symbol) -->
+    <text
+      v-if="isExercise"
+      text-anchor="middle"
+      dominant-baseline="central"
+      font-size="10"
+      style="pointer-events: none;"
+    >
+      🌬️
+    </text>
 
     <!-- Inner core (bright dot) -->
     <circle

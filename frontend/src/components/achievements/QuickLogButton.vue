@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { useI18n } from '@/i18n';
 import { useAchievementStore } from '@/stores/achievements';
 import TemplateSelector from './TemplateSelector.vue';
 
+const { t } = useI18n();
 const store = useAchievementStore();
 const isExpanded = ref(false);
 const showCustom = ref(false);
@@ -37,7 +39,7 @@ async function handleCustomLog() {
         style="box-shadow: 0 8px 40px rgba(0,0,0,0.4);"
       >
         <div class="flex items-center justify-between mb-3">
-          <h3 class="text-sm font-semibold" style="color: var(--text-primary);">记录一个成就</h3>
+          <h3 class="text-sm font-semibold" style="color: var(--text-primary);">{{ t('achievements.logAchievement') }}</h3>
           <button @click="isExpanded = false" style="color: var(--text-muted);">×</button>
         </div>
 
@@ -56,14 +58,14 @@ async function handleCustomLog() {
               class="text-xs transition-colors"
               style="color: var(--text-muted);"
             >
-              + 自定义成就
+              {{ t('achievements.customAchievement') }}
             </button>
           </div>
           <div v-else class="flex gap-2">
             <input
               v-model="customTitle"
               type="text"
-              placeholder="今天做了什么？"
+              :placeholder="t('achievements.achievementPlaceholder')"
               class="input-field text-sm py-2"
               @keyup.enter="handleCustomLog"
               autofocus
@@ -87,7 +89,7 @@ async function handleCustomLog() {
         class="px-4 py-2 rounded-xl text-sm font-medium shadow-md"
         style="background: var(--mood-accent-soft); color: var(--mood-accent);"
       >
-        🌱 种子已种下
+        {{ t('achievements.seedPlanted') }}
       </div>
     </transition>
 

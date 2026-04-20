@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useChatStore } from '@/stores/chat';
 import { useSessionTree, BLOOM_EMOJI, type TreeNode as TreeNodeType } from '@/composables/useSessionTree';
+import { useI18n } from '@/i18n';
 import TreeNode from './TreeNode.vue';
 import TreeNodePopover from './TreeNodePopover.vue';
 import TreeBadgeDisplay from './TreeBadgeDisplay.vue';
@@ -15,10 +16,11 @@ const emit = defineEmits<{
 
 const moodTheme = useMoodThemeStore();
 const chatStore = useChatStore();
+const { t } = useI18n();
 const {
   nodes, stats, rareBloomCollection, streak,
   currentMilestone, nextMilestone, checkMilestone,
-  STREAK_MILESTONES,
+  STREAK_MILESTONES, EXERCISE_EMOJI,
 } = useSessionTree();
 
 const svgWidth = 320;
@@ -189,14 +191,14 @@ function cloudPath(scale: number): string {
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
         <span class="text-lg">🌳</span>
-        <h2 class="text-sm font-medium" style="color: var(--text-primary);">成长树</h2>
+        <h2 class="text-sm font-medium" style="color: var(--text-primary);">{{ t('growthTree.title') }}</h2>
         <!-- Streak display -->
         <span
           v-if="streak.isActive && streak.days >= 2"
           class="text-[10px] px-2 py-0.5 rounded-full"
           :style="{ background: moodTheme.palette.navActive, color: moodTheme.palette.accent }"
         >
-          🔥 {{ streak.days }}天
+          🔥 {{ streak.days }}{{ t('growthTree.streakDays') }}
         </span>
       </div>
       <button
@@ -223,7 +225,7 @@ function cloudPath(scale: number): string {
       <button
         v-for="node in nodes"
         :key="node.sessionId"
-        @click="emit('select-session', node.sessionId)"
+        @click="node.nodeType === 'chat' ? emit('select-session', node.sessionId) : undefined"
         class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-sm transition-all"
         :style="node.sessionId === chatStore.currentSessionId
           ? { background: moodTheme.palette.navActive, color: moodTheme.palette.navActiveText }
@@ -231,11 +233,14 @@ function cloudPath(scale: number): string {
       >
         <span
           class="w-2.5 h-2.5 rounded-full flex-shrink-0"
-          :style="{ background: moodTheme.palette.accent, opacity: node.activityScore / 100 * 0.8 + 0.2 }"
+          :style="{
+            background: node.nodeType === 'exercise' ? '#60a5fa' : moodTheme.palette.accent,
+            opacity: node.activityScore / 100 * 0.8 + 0.2,
+          }"
         />
         <span class="truncate">{{ node.title }}</span>
         <span class="text-[10px] ml-auto flex-shrink-0" style="color: var(--text-muted);">
-          {{ BLOOM_EMOJI[node.bloomStage] }}
+          {{ node.nodeType === 'exercise' ? (EXERCISE_EMOJI[node.exerciseType || ''] || '🌬️') : BLOOM_EMOJI[node.bloomStage] }}
         </span>
       </button>
     </div>
@@ -358,7 +363,7 @@ function cloudPath(scale: number): string {
           :key="'branch-' + node.sessionId"
           :d="branchPath(node)"
           fill="none"
-          :stroke="moodTheme.palette.accent"
+          :stroke="node.nodeType === 'exercise' ? '#60a5fa' : moodTheme.palette.accent"
           stroke-width="1.5"
           :stroke-opacity="0.15 + node.activityScore / 100 * 0.2"
           stroke-linecap="round"
@@ -371,10 +376,11 @@ function cloudPath(scale: number): string {
           :bloom-stage="node.bloomStage"
           :activity-score="node.activityScore"
           :title="node.title"
-          :is-active="node.sessionId === chatStore.currentSessionId"
+          :is-active="node.nodeType === 'chat' && node.sessionId === chatStore.currentSessionId"
           :is-new="node.sessionId === newNodeId"
-          :is-watering="node.sessionId === wateringNodeId"
+          :is-watering="node.nodeType === 'chat' && node.sessionId === wateringNodeId"
           :rare-bloom-types="node.rareBloomTypes"
+          :node-type="node.nodeType"
           :cx="node.x * svgWidth"
           :cy="(1 - node.y) * svgHeight"
           @click="onNodeClick(node)"
@@ -437,11 +443,12 @@ function cloudPath(scale: number): string {
     />
 
     <!-- Stats -->
-    <div class="flex items-center justify-center gap-4 mt-3 text-xs" style="color: var(--text-muted);">
-      <span>🌱 {{ stats.total }} 次对话</span>
-      <span v-if="stats.blooming > 0">🌸 {{ stats.blooming }} 朵花已开</span>
+    <div class="flex items-center justify-center gap-4 mt-3 text-xs flex-wrap" style="color: var(--text-muted);">
+      <span>🌱 {{ stats.total }} {{ t('growthTree.conversations') }}</span>
+      <span v-if="stats.breathingTotal > 0">🌬️ {{ stats.breathingTotal }} {{ t('growthTree.breaths') }}</span>
+      <span v-if="stats.blooming > 0">🌸 {{ stats.blooming }} {{ t('growthTree.flowersOpen') }}</span>
       <span v-if="nextMilestone" :style="{ color: moodTheme.palette.accent }">
-        下一个: {{ nextMilestone.emoji }} {{ nextMilestone.label }}
+        {{ t('growthTree.nextMilestone') }}: {{ nextMilestone.emoji }} {{ nextMilestone.label }}
       </span>
     </div>
 
@@ -455,7 +462,7 @@ function cloudPath(scale: number): string {
         border: `1px solid ${moodTheme.palette.accent}30`,
       }"
     >
-      + 种下新种子
+      + {{ t('growthTree.newSeed') }}
     </button>
 
     <!-- Node popover -->

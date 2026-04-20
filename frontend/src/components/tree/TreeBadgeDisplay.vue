@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useI18n } from '@/i18n';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { RARE_BLOOM_CONFIG, type RareBloomType, type StreakInfo } from '@/composables/useSessionTree';
 
@@ -8,6 +9,7 @@ const props = defineProps<{
   streak: StreakInfo;
 }>();
 
+const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 
 const allTypes: RareBloomType[] = ['night_bloom', 'early_bird', 'deep_talk', 'quick_checkin'];
@@ -51,10 +53,10 @@ const badges = computed(() =>
           borderColor: moodTheme.palette.accent + '40',
           color: moodTheme.palette.accent,
         }"
-        title="连续签到天数"
+        :title="t('growthTree.consecutiveCheckIn')"
       >
         <span class="badge-emoji">🔥</span>
-        <span class="badge-count">{{ streak.days }}天</span>
+        <span class="badge-count">{{ streak.days }}{{ t('growthTree.streakDays') }}</span>
       </span>
     </div>
   </div>

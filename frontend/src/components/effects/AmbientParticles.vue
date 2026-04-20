@@ -131,13 +131,29 @@ onUnmounted(() => {
   window.removeEventListener('resize', resize);
 });
 
-// Respond to mood changes
+// Respond to mood changes — smooth color transition + burst
 watch(() => moodTheme.palette.accent, () => {
   if (canvas.value) {
     const count = getParticleCount();
     while (particles.length > count) particles.pop();
     while (particles.length < count) {
       particles.push(createParticle(canvas.value.width, canvas.value.height));
+    }
+
+    // Spawn a burst of 5 fast-rising transition particles
+    if (!prefersReducedMotion && !moodTheme.isLowEnergy) {
+      const w = canvas.value.width;
+      const h = canvas.value.height;
+      for (let i = 0; i < 5; i++) {
+        const burst = createParticle(w, h);
+        burst.y = h * (0.3 + Math.random() * 0.5);  // Start mid-screen
+        burst.speedY = 0.6 + Math.random() * 0.5;     // Faster
+        burst.maxOpacity = 0.5 + Math.random() * 0.3;  // Brighter
+        burst.opacity = burst.maxOpacity;               // Visible immediately
+        burst.opacityDir = -1;                          // Fade out
+        burst.size = 2 + Math.random() * 3;             // Slightly larger
+        particles.push(burst);
+      }
     }
   }
 });
