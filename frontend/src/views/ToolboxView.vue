@@ -32,8 +32,8 @@ function getToolDesc(tool: typeof tools.value[number]) {
 <template>
   <div class="py-6 space-y-6">
     <div class="animate-float-in">
-      <h1 class="text-xl font-semibold" style="color: var(--text-primary);">🌿 {{ t('toolbox.title') }}</h1>
-      <p class="text-sm mt-1" style="color: var(--text-secondary);">{{ t('toolbox.subtitle') }}</p>
+      <h1 class="text-heading" style="color: var(--text-primary);">🌿 {{ t('toolbox.title') }}</h1>
+      <p class="text-caption mt-1">{{ t('toolbox.subtitle') }}</p>
     </div>
 
     <!-- Low energy comfort message -->
@@ -65,8 +65,8 @@ function getToolDesc(tool: typeof tools.value[number]) {
           <span class="text-2xl">{{ tool.icon }}</span>
         </div>
         <div class="flex-1">
-          <p class="font-medium text-sm" style="color: var(--text-primary);">{{ tool.name }}</p>
-          <p class="text-xs mt-0.5" style="color: var(--text-muted);">{{ getToolDesc(tool) }}</p>
+          <p class="text-body font-medium" style="color: var(--text-primary);">{{ tool.name }}</p>
+          <p class="text-caption mt-0.5">{{ getToolDesc(tool) }}</p>
         </div>
         <span style="color: var(--text-muted);">→</span>
 

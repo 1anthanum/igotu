@@ -25,6 +25,8 @@ import MoodGuidance from '@/components/mood/MoodGuidance.vue';
 import SanctuaryView from '@/components/sanctuary/SanctuaryView.vue';
 import EmotionPulse from '@/components/mood/EmotionPulse.vue';
 import InsightCards from '@/components/mood/InsightCards.vue';
+import WeeklyDigest from '@/components/mood/WeeklyDigest.vue';
+import DayTimeline from '@/components/visualization/DayTimeline.vue';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -124,9 +126,9 @@ function onSanctuaryBreathe() {
     <template v-else>
       <div class="space-y-6">
         <!-- Greeting -->
-        <div class="mood-gradient-bg rounded-2xl px-6 py-5 animate-float-in">
-          <p class="text-xs mb-1" style="color: var(--text-muted);">{{ greeting }}</p>
-          <h1 class="text-xl font-medium" style="color: var(--text-primary);">
+        <div class="mood-gradient-bg rounded-2xl px-6 py-8 animate-float-in">
+          <p class="text-micro mb-2">{{ greeting }}</p>
+          <h1 class="text-display" style="color: var(--text-primary);">
             {{ mainGreeting }}
           </h1>
         </div>
@@ -149,13 +151,16 @@ function onSanctuaryBreathe() {
             :to="tool.to"
             class="card flex flex-col items-center gap-2 text-center cursor-pointer py-4"
           >
-            <span class="text-xl">{{ tool.icon }}</span>
-            <span class="text-xs" style="color: var(--text-secondary);">{{ tool.label }}</span>
+            <span class="text-2xl">{{ tool.icon }}</span>
+            <span class="text-caption">{{ tool.label }}</span>
           </router-link>
         </div>
 
         <!-- Emotion insights -->
         <InsightCards />
+
+        <!-- Weekly Digest (collapsible) -->
+        <WeeklyDigest />
 
         <!-- Encouragement -->
         <EncouragementCard :messages="analytics.encouragement" />
@@ -163,7 +168,7 @@ function onSanctuaryBreathe() {
         <!-- Today's seeds -->
         <div class="card animate-float-in" style="animation-delay: 0.15s;">
           <div class="flex items-center justify-between mb-3">
-            <h2 class="text-sm font-medium" style="color: var(--text-primary);">
+            <h2 class="text-section" style="color: var(--text-primary);">
               🌱 {{ t('home.todaySeeds') }}
               <span v-if="achievements.todayCount > 0" class="ml-1" style="color: var(--mood-accent);">
                 {{ achievements.todayCount }}
@@ -190,6 +195,9 @@ function onSanctuaryBreathe() {
             </p>
           </div>
         </div>
+
+        <!-- Day Timeline -->
+        <DayTimeline />
 
         <!-- Heatmap -->
         <HeatmapCalendar :data="achievements.calendarData" />

@@ -550,6 +550,44 @@ export const en = {
     recorded: 'Recorded ✓',
   },
 
+  // ── Emotion Scatter ──
+  emotion: {
+    arousalHigh: 'Energized',
+    arousalLow: 'Calm',
+    valenceNeg: 'Unpleasant',
+    valencePos: 'Pleasant',
+    scatterTitle: 'Emotion Trail',
+    scatterEmpty: 'Your trail will appear here once you start logging',
+    scatterHint: 'Past 7 days · {count} data points',
+    quadrant: {
+      ha: 'Excited',
+      hn: 'Anxious',
+      ln: 'Low',
+      lp: 'Calm',
+    },
+  },
+  weeklyDigest: {
+    title: 'Your Week',
+    records: 'Records',
+    activeDays: 'Active Days',
+    avgMood: 'Avg Mood',
+    quadrantExcited: 'You were mostly energized and active this week',
+    quadrantAnxious: 'Anxiety showed up often — remember to breathe',
+    quadrantLow: 'Low energy was dominant — you kept going',
+    quadrantCalm: 'A calm week overall — that\'s a good sign',
+  },
+  dayTimeline: {
+    title: 'Today\'s Timeline',
+    events: 'events',
+  },
+  moodPoetic: {
+    1: ['In the darkness, you lit a small light', 'Fireflies are flickering for you', 'You chose to show up tonight'],
+    2: ['Dawn is almost here', 'You\'re a little braver than yesterday', 'The light is gathering'],
+    3: ['Stillness is a kind of strength', 'Moss grows in quiet places too', 'Being here is enough'],
+    4: ['New leaves are unfurling', 'You\'re on a good path', 'Sunlight is reaching toward you'],
+    5: ['Light is pouring through the canopy', 'You\'re glowing today', 'Every step sparkles'],
+  },
+
   // ── Mood Insights ──
   insights: {
     heading: '💡 Mood Insights',

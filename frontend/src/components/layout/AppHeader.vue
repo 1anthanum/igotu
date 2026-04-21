@@ -41,7 +41,7 @@ function isActive(name: string, prefix?: string): boolean {
     class="sticky top-0 z-40 border-b backdrop-blur-md"
     style="background: rgba(6,15,13,0.88); border-color: var(--border-subtle);"
   >
-    <div class="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
+    <div class="app-container mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
       <!-- Logo -->
       <router-link to="/" class="flex items-center gap-2 group">
         <span class="text-xl transition-transform group-hover:scale-110">🌱</span>
@@ -60,21 +60,23 @@ function isActive(name: string, prefix?: string): boolean {
           :key="item.name"
           :to="item.to"
           class="nav-item rounded-xl text-sm font-medium transition-all duration-200"
-          :class="{ 'low-energy-nav': moodTheme.isLowEnergy }"
+          :class="{ 'low-energy-nav': moodTheme.isLowEnergy, 'nav-active': isActive(item.name, item.prefix) }"
           :style="isActive(item.name, item.prefix)
             ? { background: 'var(--mood-nav-active)', color: 'var(--mood-nav-active-text)' }
             : { color: 'var(--text-muted)' }"
           @mouseenter="($event.target as HTMLElement).style.color = isActive(item.name, item.prefix) ? '' : 'var(--text-primary)'"
           @mouseleave="($event.target as HTMLElement).style.color = isActive(item.name, item.prefix) ? 'var(--mood-nav-active-text)' : 'var(--text-muted)'"
+          :title="item.label"
         >
-          <!-- Low energy: show icon always, text only for active -->
+          <!-- Low energy: icon only -->
           <template v-if="moodTheme.isLowEnergy">
             <span class="nav-icon">{{ item.icon }}</span>
             <span v-if="isActive(item.name, item.prefix)" class="nav-label-active">{{ item.label }}</span>
           </template>
-          <!-- Normal: show text -->
+          <!-- Narrow: icon; Wide: text (controlled by CSS) -->
           <template v-else>
-            {{ item.label }}
+            <span class="nav-icon-responsive">{{ item.icon }}</span>
+            <span class="nav-label-responsive">{{ item.label }}</span>
           </template>
         </router-link>
 
@@ -116,6 +118,23 @@ function isActive(name: string, prefix?: string): boolean {
 <style scoped>
 .nav-item {
   padding: 6px 12px;
+  position: relative;
+}
+.nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%) scaleX(0);
+  width: 60%;
+  height: 2px;
+  background: var(--mood-accent);
+  border-radius: 1px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--mood-accent) 40%, transparent);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.nav-item.nav-active::after {
+  transform: translateX(-50%) scaleX(1);
 }
 .nav-item.low-energy-nav {
   padding: 8px;
@@ -129,6 +148,22 @@ function isActive(name: string, prefix?: string): boolean {
 .nav-label-active {
   font-size: 0.75rem;
 }
+
+/* Responsive nav: icon-only below 1024px, text at 1024px+ */
+.nav-icon-responsive {
+  font-size: 1.1rem;
+  display: inline;
+}
+.nav-label-responsive {
+  display: none;
+}
+@media (max-width: 1023px) {
+  .nav-item { padding: 8px; }
+}
+@media (min-width: 1024px) {
+  .nav-icon-responsive { display: none; }
+  .nav-label-responsive { display: inline; }
+}
 .login-btn {
   color: var(--mood-accent);
   border: 1px solid var(--mood-accent);
@@ -138,5 +173,9 @@ function isActive(name: string, prefix?: string): boolean {
 .login-btn:hover {
   background: var(--mood-accent);
   color: var(--bg-primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-item::after { transition: none; }
 }
 </style>

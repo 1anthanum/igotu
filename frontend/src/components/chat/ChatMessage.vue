@@ -82,12 +82,15 @@ const parsed = computed(() => {
 
     <!-- Bubble -->
     <div
-      class="max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed"
+      class="max-w-[min(80%,640px)] rounded-2xl px-4 py-3 text-sm leading-relaxed"
       :style="role === 'user'
         ? { background: 'var(--mood-hover-bg)', color: 'var(--text-primary)', borderRadius: '1rem 0.25rem 1rem 1rem' }
         : { background: 'var(--bg-card)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)', borderRadius: '0.25rem 1rem 1rem 1rem' }"
     >
-      <div class="whitespace-pre-wrap">{{ parsed.body }}</div>
+      <div
+        class="whitespace-pre-wrap"
+        :class="{ 'text-shimmer': role === 'assistant' && isVisible }"
+      >{{ parsed.body }}</div>
 
       <ChoiceButtons
         v-if="role === 'assistant' && parsed.choices.length > 0 && isLast"
@@ -110,11 +113,46 @@ const parsed = computed(() => {
   transform: translateX(0);
 }
 
+/* C11: Text shimmer — single-pass gradient sweep on assistant messages */
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--text-primary) 0%,
+    var(--text-primary) 35%,
+    var(--mood-nav-active-text) 50%,
+    var(--text-primary) 65%,
+    var(--text-primary) 100%
+  );
+  background-size: 250% 100%;
+  background-position: 100% 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer-sweep 2s ease 0.6s 1 forwards;
+}
+
+@keyframes text-shimmer-sweep {
+  0% { background-position: 100% 0; }
+  100% { background-position: -50% 0; }
+}
+
+/* Low-energy: disable shimmer */
+:global(body.low-energy) .text-shimmer {
+  animation: none;
+  background: none;
+  -webkit-text-fill-color: var(--text-primary);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .chat-bubble-entrance {
     transition: none !important;
     opacity: 1;
     transform: none;
+  }
+  .text-shimmer {
+    animation: none !important;
+    background: none !important;
+    -webkit-text-fill-color: var(--text-primary) !important;
   }
 }
 </style>

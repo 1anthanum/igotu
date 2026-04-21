@@ -1,14 +1,21 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useI18n } from '@/i18n';
 import { useMoodStore } from '@/stores/mood';
-import { MOOD_CONFIG } from '@/composables/useMoodTheme';
+import { useMoodThemeStore, MOOD_CONFIG } from '@/composables/useMoodTheme';
 
 const { t } = useI18n();
 const moodStore = useMoodStore();
+const moodTheme = useMoodThemeStore();
 const note = ref('');
 const showNote = ref(false);
 const hoveredMood = ref<number | null>(null);
+
+// B8: Poetic feedback state
+const poeticLine = ref('');
+const showPoetic = ref(false);
+const pickerShrunk = ref(false);
+let poeticTimer: ReturnType<typeof setTimeout> | null = null;
 
 async function selectMood(mood: typeof MOOD_CONFIG[number]) {
   await moodStore.log({
@@ -19,11 +26,34 @@ async function selectMood(mood: typeof MOOD_CONFIG[number]) {
   });
   note.value = '';
   showNote.value = false;
+
+  // Pick a random poetic line for this mood level
+  const lines = t(`moodPoetic.${mood.score}`);
+  if (Array.isArray(lines) && lines.length > 0) {
+    poeticLine.value = lines[Math.floor(Math.random() * lines.length)];
+  } else {
+    poeticLine.value = t('moodPicker.seedPlanted');
+  }
+
+  // Trigger the transition
+  pickerShrunk.value = true;
+  showPoetic.value = true;
+
+  // Auto-dismiss after 3.5s
+  if (poeticTimer) clearTimeout(poeticTimer);
+  poeticTimer = setTimeout(() => {
+    showPoetic.value = false;
+    pickerShrunk.value = false;
+  }, 3500);
 }
 </script>
 
 <template>
-  <div class="card-glow p-6 animate-float-in" style="animation-delay: 0.1s;">
+  <div
+    class="card-glow p-6 animate-float-in picker-container"
+    :class="{ 'picker-shrunk': pickerShrunk }"
+    style="animation-delay: 0.1s;"
+  >
     <p class="text-sm mb-5" style="color: var(--text-secondary);">
       {{ t('moodPicker.instruction') }}
     </p>
@@ -92,23 +122,33 @@ async function selectMood(mood: typeof MOOD_CONFIG[number]) {
       >
         {{ t('moodPicker.addNote') }}
       </button>
-      <textarea
-        v-else
-        v-model="note"
-        :placeholder="t('moodPicker.notePlaceholder')"
-        class="input-field w-full text-sm resize-none"
-        rows="2"
-      />
+      <div v-else class="input-focus-wrapper">
+        <textarea
+          v-model="note"
+          :placeholder="t('moodPicker.notePlaceholder')"
+          class="input-field w-full text-sm resize-none"
+          rows="2"
+        />
+      </div>
     </div>
 
-    <!-- Success feedback -->
-    <transition name="page">
+    <!-- B8: Poetic feedback card (replaces simple text) -->
+    <transition name="poetic-rise">
       <div
-        v-if="moodStore.justLogged"
-        class="mt-3 text-center text-sm font-medium"
-        style="color: var(--mood-accent);"
+        v-if="showPoetic"
+        class="poetic-card mt-4"
+        :style="{
+          background: `linear-gradient(135deg, ${moodTheme.palette.accentSoft}, ${moodTheme.palette.gradientTo})`,
+          border: `1px solid ${moodTheme.palette.accent}20`,
+        }"
       >
-        {{ t('moodPicker.seedPlanted') }}
+        <div class="poetic-glow" :style="{ background: moodTheme.palette.accent }" />
+        <p class="poetic-text" :style="{ color: moodTheme.palette.navActiveText }">
+          {{ poeticLine }}
+        </p>
+        <p class="text-micro mt-2 text-center" style="opacity: 0.5;">
+          {{ t('moodPicker.seedPlanted') }}
+        </p>
       </div>
     </transition>
   </div>
@@ -117,5 +157,72 @@ async function selectMood(mood: typeof MOOD_CONFIG[number]) {
 <style scoped>
 .mood-bar {
   cursor: pointer;
+}
+
+/* B8: Picker shrinks slightly when poetic card appears */
+.picker-container {
+  transition: transform 0.5s ease, padding 0.5s ease;
+}
+.picker-shrunk {
+  transform: scale(0.97);
+}
+
+/* B8: Poetic feedback card */
+.poetic-card {
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.poetic-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  opacity: 0.06;
+  transform: translate(-50%, -50%);
+  filter: blur(30px);
+  animation: poetic-pulse 2s ease-in-out infinite;
+}
+
+.poetic-text {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  line-height: 1.6;
+  position: relative;
+  z-index: 1;
+}
+
+/* Transition: slide up + fade in */
+.poetic-rise-enter-active {
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.poetic-rise-leave-active {
+  transition: all 0.4s ease;
+}
+.poetic-rise-enter-from {
+  opacity: 0;
+  transform: translateY(16px) scale(0.95);
+}
+.poetic-rise-leave-to {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.98);
+}
+
+@keyframes poetic-pulse {
+  0%, 100% { opacity: 0.04; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.1; transform: translate(-50%, -50%) scale(1.5); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .picker-container { transition: none; }
+  .poetic-rise-enter-active,
+  .poetic-rise-leave-active { transition: none; }
+  .poetic-glow { animation: none; }
 }
 </style>

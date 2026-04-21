@@ -55,7 +55,7 @@ function onCheckInDone(score: number) {
     <GradientMesh />
 
     <AppHeader v-if="auth.isAuthenticated" />
-    <main class="max-w-5xl mx-auto px-6 pb-24 relative" style="z-index: 1;">
+    <main class="app-container mx-auto px-4 sm:px-6 pb-24 relative" style="z-index: 1;">
       <router-view v-slot="{ Component }">
         <transition :name="transitionName" mode="out-in">
           <component :is="Component" />

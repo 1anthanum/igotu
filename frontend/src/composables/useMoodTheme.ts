@@ -143,6 +143,67 @@ const PALETTES: Record<number, MoodPalette> = {
   },
 };
 
+// ── C12: 深度个性化渐变 — 7天情绪加权调色板 ──────────────
+// 读取过去7天的情绪分布，生成独特的混合渐变色
+interface WeekMoodDistribution {
+  weights: Record<number, number>;  // score → normalized weight (0-1)
+  dominant: number;                 // most frequent mood
+  secondary: number;                // second most frequent
+}
+
+function computeWeekDistribution(): WeekMoodDistribution {
+  const defaultDist: WeekMoodDistribution = { weights: { 1: 0, 2: 0, 3: 1, 4: 0, 5: 0 }, dominant: 3, secondary: 3 };
+  try {
+    const raw = localStorage.getItem('igotu_mood_log');
+    if (!raw) return defaultDist;
+    const all = JSON.parse(raw) as Array<{ score: number; timestamp: number }>;
+    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    const recent = all.filter(e => e.timestamp >= weekAgo);
+    if (recent.length < 3) return defaultDist;
+
+    // Count occurrences with recency weighting
+    const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+    const now = Date.now();
+    for (const entry of recent) {
+      // More recent entries get higher weight (1.0 to 0.4)
+      const age = (now - entry.timestamp) / (7 * 24 * 60 * 60 * 1000);
+      const recencyWeight = 1 - age * 0.6;
+      const score = Math.max(1, Math.min(5, Math.round(entry.score)));
+      counts[score] += recencyWeight;
+    }
+
+    // Normalize to 0-1
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    const weights: Record<number, number> = {};
+    for (const [k, v] of Object.entries(counts)) {
+      weights[Number(k)] = total > 0 ? v / total : 0;
+    }
+
+    // Find dominant & secondary
+    const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+    const dominant = Number(sorted[0][0]);
+    const secondary = sorted.length > 1 && sorted[1][1] > 0 ? Number(sorted[1][0]) : dominant;
+
+    return { weights, dominant, secondary };
+  } catch {
+    return defaultDist;
+  }
+}
+
+/** Hex color interpolation */
+function lerpColor(a: string, b: string, t: number): string {
+  const parse = (hex: string) => {
+    const h = hex.replace('#', '');
+    return [parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)];
+  };
+  const [r1, g1, b1] = parse(a);
+  const [r2, g2, b2] = parse(b);
+  const r = Math.round(r1 + (r2 - r1) * t);
+  const g = Math.round(g1 + (g2 - g1) * t);
+  const bl = Math.round(b1 + (b2 - b1) * t);
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${bl.toString(16).padStart(2, '0')}`;
+}
+
 // 默认（未记录情绪时）使用 mood 3 的配色
 const DEFAULT_MOOD = 3;
 
@@ -171,6 +232,8 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
     currentMood.value = clamped;
     localStorage.setItem('igotu_last_mood', String(clamped));
     applyToDOM();
+    // C12: Refresh personalized gradient when mood changes
+    refreshWeekDistribution();
   }
 
   /** 平滑设置情绪（用于 AI 对话联动，带过渡动画） */
@@ -231,7 +294,55 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
   /** 只读情绪分数（供外部组件读取） */
   const moodScore = computed(() => currentMood.value);
 
-  return { currentMood, moodScore, palette, isLowEnergy, animationSpeed, setMood, setMoodSmooth, init };
+  /** C12: 个性化渐变 — 基于7天情绪分布混合 */
+  const weekDistribution = ref<WeekMoodDistribution>(computeWeekDistribution());
+
+  const personalizedGradient = computed(() => {
+    const dist = weekDistribution.value;
+    const domPalette = PALETTES[dist.dominant] || PALETTES[DEFAULT_MOOD];
+    const secPalette = PALETTES[dist.secondary] || domPalette;
+
+    // Blend: 70% dominant + 30% secondary
+    const blendT = 0.3;
+    const from = lerpColor(domPalette.gradientFrom, secPalette.gradientFrom, blendT);
+    const to = lerpColor(domPalette.gradientTo, secPalette.gradientTo, blendT);
+    const mid = lerpColor(domPalette.accent, secPalette.accent, blendT);
+
+    return {
+      from,
+      to,
+      mid,
+      /** CSS gradient string for background */
+      css: `linear-gradient(135deg, ${from} 0%, ${to} 60%, ${lerpColor(to, mid, 0.15)} 100%)`,
+    };
+  });
+
+  function refreshWeekDistribution() {
+    weekDistribution.value = computeWeekDistribution();
+    applyPersonalizedGradient();
+  }
+
+  function applyPersonalizedGradient() {
+    const root = document.documentElement;
+    const pg = personalizedGradient.value;
+    root.style.setProperty('--personal-gradient-from', pg.from);
+    root.style.setProperty('--personal-gradient-to', pg.to);
+    root.style.setProperty('--personal-gradient-mid', pg.mid);
+    root.style.setProperty('--personal-gradient', pg.css);
+  }
+
+  // Extend init to also compute personalized gradient
+  const _origInit = init;
+  function initWithPersonalization() {
+    _origInit();
+    refreshWeekDistribution();
+  }
+
+  return {
+    currentMood, moodScore, palette, isLowEnergy, animationSpeed,
+    setMood, setMoodSmooth, init: initWithPersonalization,
+    personalizedGradient, refreshWeekDistribution,
+  };
 });
 
 // ── 工具函数：情绪对应的 emoji 和标签 ──────────────────

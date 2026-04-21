@@ -551,6 +551,44 @@ export const zh = {
     recorded: '已记录 ✓',
   },
 
+  // ── Emotion Scatter ──
+  emotion: {
+    arousalHigh: '激动',
+    arousalLow: '平静',
+    valenceNeg: '不愉快',
+    valencePos: '愉快',
+    scatterTitle: '情绪轨迹',
+    scatterEmpty: '开始记录情绪后，你的轨迹将出现在这里',
+    scatterHint: '过去7天 · {count} 个记录点',
+    quadrant: {
+      ha: '兴奋',
+      hn: '焦虑',
+      ln: '低落',
+      lp: '平静',
+    },
+  },
+  weeklyDigest: {
+    title: '这周的你',
+    records: '记录数',
+    activeDays: '活跃天',
+    avgMood: '均值',
+    quadrantExcited: '这周你大多时候情绪偏兴奋活跃',
+    quadrantAnxious: '这周焦虑感偏多，记得深呼吸',
+    quadrantLow: '这周低能量居多，你在坚持着',
+    quadrantCalm: '这周整体很平静，状态不错',
+  },
+  dayTimeline: {
+    title: '今日轨迹',
+    events: '个事件',
+  },
+  moodPoetic: {
+    1: ['深夜里，你点亮了一盏灯', '萤火虫正在为你闪烁', '黑暗中，你选择了记录'],
+    2: ['黎明快来了', '你比昨天更勇敢了一点', '微光正在聚集'],
+    3: ['安静是一种力量', '苔藓也在静静生长', '你在这里，就很好'],
+    4: ['新叶正在舒展', '你走在一条好路上', '阳光正朝你靠近'],
+    5: ['光穿过树冠洒在你身上', '今天的你在发光', '每一步都闪闪的'],
+  },
+
   // ── Mood Insights ──
   insights: {
     heading: '💡 情绪洞察',

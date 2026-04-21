@@ -21,15 +21,23 @@ export const useChatStore = defineStore('chat', () => {
   const loading = ref(false);
 
   async function fetchSessions() {
-    sessions.value = await getSessions();
+    try {
+      sessions.value = await getSessions();
+    } catch {
+      sessions.value = [];
+    }
   }
 
   async function startNewSession() {
-    const session = await createSession();
-    sessions.value.unshift(session);
-    currentSessionId.value = session.id;
-    messages.value = [];
-    return session;
+    try {
+      const session = await createSession();
+      sessions.value.unshift(session);
+      currentSessionId.value = session.id;
+      messages.value = [];
+      return session;
+    } catch {
+      return null;
+    }
   }
 
   async function loadSession(sessionId: string) {
@@ -37,6 +45,8 @@ export const useChatStore = defineStore('chat', () => {
     try {
       currentSessionId.value = sessionId;
       messages.value = await getMessages(sessionId);
+    } catch {
+      messages.value = [];
     } finally {
       loading.value = false;
     }
@@ -94,19 +104,25 @@ export const useChatStore = defineStore('chat', () => {
   }
 
   async function renameSession(sessionId: string, title: string) {
-    const updated = await apiRenameSession(sessionId, title);
-    const idx = sessions.value.findIndex(s => s.id === sessionId);
-    if (idx >= 0) sessions.value[idx] = { ...sessions.value[idx], title: updated.title };
-    return updated;
+    try {
+      const updated = await apiRenameSession(sessionId, title);
+      const idx = sessions.value.findIndex(s => s.id === sessionId);
+      if (idx >= 0) sessions.value[idx] = { ...sessions.value[idx], title: updated.title };
+      return updated;
+    } catch {
+      return null;
+    }
   }
 
   async function removeSession(sessionId: string) {
-    await deleteSession(sessionId);
-    sessions.value = sessions.value.filter(s => s.id !== sessionId);
-    if (currentSessionId.value === sessionId) {
-      currentSessionId.value = null;
-      messages.value = [];
-    }
+    try {
+      await deleteSession(sessionId);
+      sessions.value = sessions.value.filter(s => s.id !== sessionId);
+      if (currentSessionId.value === sessionId) {
+        currentSessionId.value = null;
+        messages.value = [];
+      }
+    } catch { /* silent */ }
   }
 
   return {

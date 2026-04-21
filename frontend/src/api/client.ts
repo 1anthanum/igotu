@@ -24,13 +24,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Skip redirect for optional/background API calls (exercises, mood logs, etc.)
-      const optionalPaths = ['/exercises', '/phq9', '/cognitive', '/chat/sessions'];
+      // Skip redirect for background/optional API calls
+      const optionalPaths = ['/exercises', '/phq9', '/cognitive'];
       const requestPath = error.config?.url || '';
       const isOptional = optionalPaths.some(p => requestPath.includes(p));
 
       if (isOptional) {
-        // Don't attempt refresh or redirect — just fail silently
         return Promise.reject(error);
       }
 

@@ -12,7 +12,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <div class="grid grid-cols-4 gap-2">
+  <div class="grid grid-cols-3 lg:grid-cols-4 gap-2">
     <button
       v-for="template in templates"
       :key="template.id"

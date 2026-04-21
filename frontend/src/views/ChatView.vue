@@ -103,6 +103,34 @@ const openingGreeting = computed(() => {
   return t('chat.greetingNew');
 });
 
+/**
+ * B6: 对话深度指示器
+ * 随对话轮次增加，bot 头像光圈变亮变厚
+ * 超过6轮后色温微妙偏暖
+ */
+const conversationDepth = computed(() => {
+  const rounds = Math.floor(chatStore.messages.length / 2); // pairs of user+assistant
+  return Math.min(rounds, 10); // cap at 10
+});
+
+const depthRingStyle = computed(() => {
+  const d = conversationDepth.value;
+  const borderWidth = 1.5 + d * 0.3;  // 1.5px → 4.5px
+  const glowSize = 8 + d * 4;          // 8px → 48px
+  const glowOpacity = 0.15 + d * 0.05; // 0.15 → 0.65
+  // After 6 rounds, blend accent toward warm
+  const useWarm = d >= 6;
+  const color = useWarm
+    ? `color-mix(in srgb, ${moodTheme.palette.accent} 65%, #f59e0b)`
+    : moodTheme.palette.accent;
+
+  return {
+    border: `${borderWidth}px solid ${color}30`,
+    boxShadow: `0 0 ${glowSize}px rgba(20,184,166,${glowOpacity})`,
+    transition: 'border 0.8s ease, box-shadow 0.8s ease',
+  };
+});
+
 const inputPlaceholder = computed(() => {
   if (showOpening.value && chatStore.messages.length === 0) {
     return moodTheme.isLowEnergy ? t('chat.placeholderOpeningLow') : t('chat.placeholderOpening');
@@ -175,18 +203,18 @@ async function loadSession(sessionId: string) {
 </script>
 
 <template>
-  <div class="py-4 flex flex-col" style="height: calc(100vh - 56px);">
+  <div class="py-4 flex flex-col" style="height: calc(100dvh - 56px);">
     <!-- Header -->
     <div class="flex items-center justify-between mb-3">
       <div class="flex items-center gap-2">
         <div
           class="w-8 h-8 rounded-full flex items-center justify-center text-base"
-          :style="{ background: moodTheme.palette.accentSoft, border: `1.5px solid ${moodTheme.palette.accent}30` }"
+          :style="{ background: moodTheme.palette.accentSoft, ...depthRingStyle }"
         >
           🌱
         </div>
         <div>
-          <h1 class="text-sm font-medium" style="color: var(--text-primary);">{{ t('chat.botName') }}</h1>
+          <h1 class="text-section" style="color: var(--text-primary);">{{ t('chat.botName') }}</h1>
           <div class="flex items-center gap-1">
             <span
               class="w-1.5 h-1.5 rounded-full"
@@ -283,7 +311,7 @@ async function loadSession(sessionId: string) {
           >
             <span class="text-2xl">🌱</span>
           </div>
-          <p class="text-base" style="color: var(--text-primary);">{{ openingGreeting }}</p>
+          <p class="text-heading" style="color: var(--text-primary);">{{ openingGreeting }}</p>
           <p v-if="!moodTheme.isLowEnergy" class="text-xs mt-1" style="color: var(--text-muted);">
             {{ t('chat.tagHint') }}
           </p>
@@ -367,13 +395,15 @@ async function loadSession(sessionId: string) {
       </div>
 
       <form @submit.prevent="sendMessage()" class="flex gap-2">
-        <input
-          v-model="input"
-          :disabled="chatStore.sending"
-          :placeholder="inputPlaceholder"
-          class="input-field flex-1 text-sm"
-          autocomplete="off"
-        />
+        <div class="input-focus-wrapper flex-1">
+          <input
+            v-model="input"
+            :disabled="chatStore.sending"
+            :placeholder="inputPlaceholder"
+            class="input-field w-full text-sm"
+            autocomplete="off"
+          />
+        </div>
         <button
           type="submit"
           :disabled="!input.trim() || chatStore.sending"
