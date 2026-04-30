@@ -8,6 +8,23 @@ import { generateOfflineResponse } from './OfflineChat';
 let client: Anthropic | null = null;
 
 function getClient(): Anthropic | null {
+  // Mode A: route through alpha-proxy (shared deployment)
+  if (env.PROXY_URL) {
+    if (!client) {
+      client = new Anthropic({
+        // Anthropic SDK will append /v1/messages to baseURL automatically
+        baseURL: env.PROXY_URL.replace(/\/$/, ''),
+        // The proxy supplies the real key, but the SDK requires a non-empty value
+        apiKey: 'proxy-managed',
+        defaultHeaders: {
+          'X-Access-Password': env.PROXY_PASSWORD,
+        },
+      });
+    }
+    return client;
+  }
+
+  // Mode B: direct Anthropic call with our own key
   if (!env.ANTHROPIC_API_KEY) return null;
   if (!client) {
     client = new Anthropic({ apiKey: env.ANTHROPIC_API_KEY });

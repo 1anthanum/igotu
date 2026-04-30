@@ -24,6 +24,15 @@ export const env = {
   ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || '',
   ANTHROPIC_MODEL: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
   ANTHROPIC_MAX_TOKENS: parseInt(process.env.ANTHROPIC_MAX_TOKENS || '4096', 10),
+
+  // alpha-proxy (shared deployment)
+  // When PROXY_URL is set, ChatService routes through it instead of calling Anthropic directly,
+  // and the proxy injects the real API key. PROXY_PASSWORD is sent as X-Access-Password.
+  PROXY_URL: process.env.PROXY_URL || '',
+  PROXY_PASSWORD: process.env.PROXY_PASSWORD || '',
+
+  // Frontend access password gate (Express middleware checks cookie + this value)
+  ACCESS_PASSWORD: process.env.ACCESS_PASSWORD || '',
 };
 
 // Validate critical env vars in production

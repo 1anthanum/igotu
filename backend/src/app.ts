@@ -5,6 +5,7 @@ import { env } from './config/environment';
 import { errorHandler } from './middleware/errorHandler';
 import { requestLogger } from './middleware/requestLogger';
 import { authLimiter, apiLimiter } from './middleware/rateLimit';
+import { accessGate, accessGateCheck } from './middleware/accessGate';
 import authRoutes from './routes/auth';
 import achievementRoutes from './routes/achievements';
 import templateRoutes from './routes/templates';
@@ -26,6 +27,10 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '1mb' })); // Limit request body size
 app.use(requestLogger);
+
+// ── Access password gate (no-op when ACCESS_PASSWORD is unset) ──
+app.use('/api', accessGate);
+app.post('/api/access-gate/check', accessGateCheck);
 
 // ── Global rate limit (all API routes) ──
 app.use('/api', apiLimiter);

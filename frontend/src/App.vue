@@ -11,6 +11,7 @@ import WelcomeModal from '@/components/onboarding/WelcomeModal.vue';
 import MoodCheckIn from '@/components/mood/MoodCheckIn.vue';
 import MoodThresholdPanel from '@/components/mood/MoodThresholdPanel.vue';
 import DemoBanner from '@/components/demo/DemoBanner.vue';
+import AccessGate from '@/components/AccessGate.vue';
 
 const router = useRouter();
 const auth = useAuthStore();
@@ -49,30 +50,32 @@ function onCheckInDone(score: number) {
 </script>
 
 <template>
-  <div class="min-h-screen" style="background-color: var(--bg-primary); color: var(--text-primary);">
-    <!-- 背景视觉层 -->
-    <AmbientParticles />
-    <GradientMesh />
+  <AccessGate>
+    <div class="min-h-screen" style="background-color: var(--bg-primary); color: var(--text-primary);">
+      <!-- 背景视觉层 -->
+      <AmbientParticles />
+      <GradientMesh />
 
-    <AppHeader v-if="auth.isAuthenticated" />
-    <main class="app-container mx-auto px-4 sm:px-6 pb-24 relative" style="z-index: 1;">
-      <router-view v-slot="{ Component }">
-        <transition :name="transitionName" mode="out-in">
-          <component :is="Component" />
-        </transition>
-      </router-view>
-    </main>
+      <AppHeader v-if="auth.isAuthenticated" />
+      <main class="app-container mx-auto px-4 sm:px-6 pb-24 relative" style="z-index: 1;">
+        <router-view v-slot="{ Component }">
+          <transition :name="transitionName" mode="out-in">
+            <component :is="Component" />
+          </transition>
+        </router-view>
+      </main>
 
-    <!-- Onboarding (only for registered users, not demo) -->
-    <WelcomeModal v-if="auth.isAuthenticated && !auth.isDemo" />
+      <!-- Onboarding (only for registered users, not demo) -->
+      <WelcomeModal v-if="auth.isAuthenticated && !auth.isDemo" />
 
-    <!-- Mood check-in overlay -->
-    <MoodCheckIn v-if="showCheckIn" @done="onCheckInDone" />
+      <!-- Mood check-in overlay -->
+      <MoodCheckIn v-if="showCheckIn" @done="onCheckInDone" />
 
-    <!-- Threshold panel (right side) -->
-    <MoodThresholdPanel v-if="(auth.isAuthenticated || auth.isDemo) && !showCheckIn" />
+      <!-- Threshold panel (right side) -->
+      <MoodThresholdPanel v-if="(auth.isAuthenticated || auth.isDemo) && !showCheckIn" />
 
-    <!-- Demo banner -->
-    <DemoBanner v-if="auth.isDemo" />
-  </div>
+      <!-- Demo banner -->
+      <DemoBanner v-if="auth.isDemo" />
+    </div>
+  </AccessGate>
 </template>
