@@ -5,8 +5,8 @@
 FROM node:20-slim AS frontend-build
 
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm ci
+COPY frontend/package*.json frontend/.npmrc* ./
+RUN npm ci --legacy-peer-deps
 COPY frontend/ ./
 # API calls go to /api on the same origin
 ENV VITE_API_URL=/api
