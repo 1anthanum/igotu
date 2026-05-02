@@ -37,8 +37,18 @@ export function accessGate(req: Request, res: Response, next: NextFunction) {
   // No password configured → middleware off
   if (!env.ACCESS_PASSWORD) return next();
 
-  // Allow the gate-check endpoint and health check
-  if (req.path === '/api/access-gate/check' || req.path === '/api/health') return next();
+  // Allow the gate-check endpoint and health check.
+  // The middleware is mounted at `/api`, so `req.path` is relative ('/health', not '/api/health').
+  // We support both forms to be safe.
+  const path = req.path;
+  if (
+    path === '/health' ||
+    path === '/access-gate/check' ||
+    path === '/api/health' ||
+    path === '/api/access-gate/check'
+  ) {
+    return next();
+  }
 
   const provided =
     (req.header('X-Access-Password') ?? '') || readCookie(req, 'ofe_access');
