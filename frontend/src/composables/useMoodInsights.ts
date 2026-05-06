@@ -342,19 +342,36 @@ function analyzeNeedPreference(entries: PersistedEntry[]): Insight | null {
 export function useMoodInsights() {
   const checkIn = useMoodCheckIn();
 
+  // Cache persisted log to avoid repeated JSON.parse in computed
+  let _persistedLogCache: PersistedEntry[] | null = null;
+  let _persistedLogVersion = 0;
+
+  function getCachedPersistedLog(): PersistedEntry[] {
+    if (_persistedLogCache === null) {
+      _persistedLogCache = loadPersistedLog();
+    }
+    return _persistedLogCache;
+  }
+
+  function invalidatePersistedCache() {
+    _persistedLogCache = null;
+    _persistedLogVersion++;
+  }
+
   // Sync session data to persistent storage
   function syncToPersistent() {
     const history = checkIn.sessionMoodHistory.value;
     if (history.length > 0) {
       appendToPersistedLog(history);
       updateStreak();
+      invalidatePersistedCache(); // Invalidate after writing
     }
   }
 
   // Generate insights
   const insights = computed<Insight[]>(() => {
     const sessionHistory = checkIn.sessionMoodHistory.value;
-    const persistedLog = loadPersistedLog();
+    const persistedLog = getCachedPersistedLog();
 
     // Combine session + persisted (deduplicated)
     const sessionTs = new Set(sessionHistory.map(s => s.timestamp));

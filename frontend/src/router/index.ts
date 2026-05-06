@@ -3,7 +3,11 @@ import { useAuthStore } from '@/stores/auth';
 
 /** Demo 模式允许访问的路由名称 */
 const DEMO_ALLOWED_ROUTES = new Set([
-  'home', 'demo', 'login', 'toolbox', 'toolbox-breathing', 'toolbox-grounding', 'toolbox-crisis-prep',
+  'home', 'demo', 'login',
+  'toolbox', 'toolbox-breathing', 'toolbox-grounding', 'toolbox-crisis-prep',
+  'toolbox-phq9', 'toolbox-cognitive',
+  'crisis-soundscape', 'crisis-breathing',
+  'mood', 'chat', 'report', 'analytics',
 ]);
 
 const router = createRouter({
@@ -56,6 +60,24 @@ const router = createRouter({
       name: 'toolbox-crisis-prep',
       component: () => import('@/components/toolbox/CrisisPrep.vue'),
       meta: { requiresAuth: true, depth: 2 },
+    },
+    {
+      path: '/crisis/soundscape',
+      name: 'crisis-soundscape',
+      component: () => import('@/views/CrisisSoundscapeView.vue'),
+      meta: { requiresAuth: true, depth: 2 },
+    },
+    {
+      path: '/crisis/breathing',
+      name: 'crisis-breathing',
+      component: () => import('@/views/CrisisBreathingView.vue'),
+      meta: { requiresAuth: true, depth: 2 },
+    },
+    {
+      path: '/report',
+      name: 'report',
+      component: () => import('@/views/DevelopmentReportView.vue'),
+      meta: { requiresAuth: true, depth: 1 },
     },
     {
       path: '/mood',

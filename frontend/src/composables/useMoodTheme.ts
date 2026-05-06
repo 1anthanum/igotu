@@ -250,34 +250,41 @@ export const useMoodThemeStore = defineStore('moodTheme', () => {
     }, TRANSITION_DURATION);
   }
 
+  let _applyRAF: number | null = null;
+
   function applyToDOM() {
-    const p = palette.value;
-    const root = document.documentElement;
-    root.style.setProperty('--mood-accent', p.accent);
-    root.style.setProperty('--mood-accent-soft', p.accentSoft);
-    root.style.setProperty('--mood-glow', p.glow);
-    root.style.setProperty('--mood-gradient-from', p.gradientFrom);
-    root.style.setProperty('--mood-gradient-to', p.gradientTo);
-    root.style.setProperty('--mood-chart', p.chart);
-    root.style.setProperty('--mood-hover-bg', p.hoverBg);
-    root.style.setProperty('--mood-nav-active', p.navActive);
-    root.style.setProperty('--mood-nav-active-text', p.navActiveText);
-    root.style.setProperty('--mood-light-line', p.lightLine);
-    root.style.setProperty('--mood-comfort-glow', p.comfortGlow);
-    root.style.setProperty('--glow-intensity', String(p.glowIntensity));
-    root.style.setProperty('--animation-speed', String(animationSpeed.value));
+    // Batch CSS variable updates into a single animation frame
+    if (_applyRAF) cancelAnimationFrame(_applyRAF);
+    _applyRAF = requestAnimationFrame(() => {
+      const p = palette.value;
+      const root = document.documentElement;
+      root.style.setProperty('--mood-accent', p.accent);
+      root.style.setProperty('--mood-accent-soft', p.accentSoft);
+      root.style.setProperty('--mood-glow', p.glow);
+      root.style.setProperty('--mood-gradient-from', p.gradientFrom);
+      root.style.setProperty('--mood-gradient-to', p.gradientTo);
+      root.style.setProperty('--mood-chart', p.chart);
+      root.style.setProperty('--mood-hover-bg', p.hoverBg);
+      root.style.setProperty('--mood-nav-active', p.navActive);
+      root.style.setProperty('--mood-nav-active-text', p.navActiveText);
+      root.style.setProperty('--mood-light-line', p.lightLine);
+      root.style.setProperty('--mood-comfort-glow', p.comfortGlow);
+      root.style.setProperty('--glow-intensity', String(p.glowIntensity));
+      root.style.setProperty('--animation-speed', String(animationSpeed.value));
 
-    // 自适应排版
-    root.style.setProperty('--mood-font-weight', String(p.fontWeight));
-    root.style.setProperty('--mood-line-height', String(p.lineHeight));
-    root.style.setProperty('--mood-letter-spacing', `${p.letterSpacing}em`);
+      // 自适应排版
+      root.style.setProperty('--mood-font-weight', String(p.fontWeight));
+      root.style.setProperty('--mood-line-height', String(p.lineHeight));
+      root.style.setProperty('--mood-letter-spacing', `${p.letterSpacing}em`);
 
-    // Toggle low-energy class on body for global CSS adaptations
-    if (isLowEnergy.value) {
-      document.body.classList.add('low-energy');
-    } else {
-      document.body.classList.remove('low-energy');
-    }
+      // Toggle low-energy class on body for global CSS adaptations
+      if (isLowEnergy.value) {
+        document.body.classList.add('low-energy');
+      } else {
+        document.body.classList.remove('low-energy');
+      }
+      _applyRAF = null;
+    });
   }
 
   function init() {

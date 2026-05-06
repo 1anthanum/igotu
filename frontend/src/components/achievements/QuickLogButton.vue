@@ -30,7 +30,7 @@ async function handleCustomLog() {
 </script>
 
 <template>
-  <div class="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
+  <div class="quick-log-fixed flex flex-col items-end gap-3">
     <!-- Expanded panel -->
     <transition name="page">
       <div
@@ -100,3 +100,18 @@ async function handleCustomLog() {
     </button>
   </div>
 </template>
+
+<style scoped>
+.quick-log-fixed {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 50;
+}
+@media (max-width: 480px) {
+  .quick-log-fixed {
+    bottom: 1.25rem;
+    right: 0.75rem;
+  }
+}
+</style>

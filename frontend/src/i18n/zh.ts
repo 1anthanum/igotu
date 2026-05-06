@@ -9,6 +9,7 @@ export const zh = {
     backToHome: '← 首页',
     next: '下一步 →',
     prev: '← 上一步',
+    previous: '← 上一步',
     done: '完成',
     restart: '再做一次',
     skip: '跳过',
@@ -214,6 +215,9 @@ export const zh = {
     inputPlaceholderLow: '想写就写，不写也可以…',
     skipText: '跳过文字，下一步 →',
     noTextHint: '不想打字？在心里默念也一样有效',
+    stepDisplay: '{sense}',
+    nextStep: '下一步 →',
+    summaryItem: '{sense}的 {n} 样东西',
     senseItems: '{sense}的 {n} 样东西',
     doneTitle: '你回来了',
     doneMsg: '你刚才用五感把自己拉回了当下。你在这里，你是安全的。',
@@ -549,6 +553,12 @@ export const zh = {
     title: '快速情绪打点',
     hint: '点一下，记录此刻的感受',
     recorded: '已记录 ✓',
+    feedbackRising: '连续在变好，继续保持 ↑',
+    feedbackFalling: '辛苦了，要不要试试深呼吸？',
+    feedbackBigJump: '感觉好多了！天空也在为你放晴',
+    feedbackDrop: '我在这里陪你。慢慢来。',
+    feedbackAnxious: '感到焦虑？试试慢呼吸 🍃',
+    feedbackSerene: '此刻很平静，真好 ✦',
   },
 
   // ── Emotion Scatter ──
@@ -647,8 +657,11 @@ export const zh = {
   // ── Sanctuary ──
   sanctuary: {
     streakLabel: '🔥 连续 {days} 天',
+    breatheWithMe: '跟我一起呼吸',
     hintBreathe: '呼吸',
+    hintSound: '声音',
     hintChat: '聊聊',
+    hintUpdateMood: '好一些了',
     affectWords: {
       1: ['沉重', '暗潮', '雾里', '疲惫', '寂静', '深渊'],
       2: ['微暗', '犹豫', '朦胧', '阴天', '低沉', '徘徊'],
@@ -662,6 +675,49 @@ export const zh = {
       3: ['安静也是力量。', '此刻，平静。', '呼吸。'],
       4: ['你在生长。', '新叶在舒展。', '感受光。'],
       5: ['阳光穿过了树冠。', '好日子。', '你值得这个。'],
+    },
+  },
+
+  // ── Next-Day Check-In (Layer 2) ──
+  nextDayCheckIn: {
+    promptNormal: '嗨，昨天有些不容易，今天感觉怎么样？',
+    promptSensitive: '你来了就好。想告诉我今天怎么样吗？',
+    stillHard: '还是很难',
+    betterNow: '好一些了',
+    imOkay: '我还好',
+    responseLow: '我在这里陪你。什么都不需要做。',
+    responseGood: '很高兴听到你好一些了 💛',
+  },
+
+  // ── Development Report (Layer 3) ──
+  report: {
+    title: '发展摘要',
+    subtitle: '了解你近期的情绪变化和工具使用情况',
+    days: '天',
+    moodTrend: '📈 情绪趋势',
+    average: '平均',
+    change: '变化',
+    volatilityLabel: '波动性',
+    volatility: {
+      low: '稳定',
+      medium: '中等',
+      high: '波动较大',
+    },
+    toolUsage: '工具使用',
+    crisisMoments: '困难时刻',
+    minutes: '分钟',
+    crisisSummary: '过去 {days} 天中有 {count} 天出现困难时刻',
+    noMoodData: '暂无情绪数据',
+    noToolData: '暂无工具使用记录',
+    footerNote: '此报告由本地数据自动生成，仅供个人参考，不构成医疗建议。',
+    moodCurve: {
+      legendMood: '情绪',
+      legendCrisis: '困难时刻',
+      legendDailyMin: '每日最低',
+      exportBtn: '导出 PNG',
+      exporting: '导出中...',
+      exportTitle: '情绪趋势曲线',
+      exportWatermark: '情绪趋势 · 仅供参考',
     },
   },
 

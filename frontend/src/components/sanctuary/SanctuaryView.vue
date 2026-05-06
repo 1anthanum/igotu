@@ -16,15 +16,20 @@ import { useMoodThemeStore, MOOD_CONFIG } from '@/composables/useMoodTheme';
 import { useSessionTree, BLOOM_EMOJI } from '@/composables/useSessionTree';
 import { useChatStore } from '@/stores/chat';
 import { useI18n } from '@/i18n';
+import { useCrisisTracker } from '@/composables/useCrisisTracker';
+import SoundScape from '@/components/crisis/SoundScape.vue';
+import BreathingMinimal from '@/components/crisis/BreathingMinimal.vue';
 
 const emit = defineEmits<{
   'want-chat': [];
   'want-breathe': [];
+  'update-mood': [];
 }>();
 
 const { t } = useI18n();
 const moodTheme = useMoodThemeStore();
 const chatStore = useChatStore();
+const crisisTracker = useCrisisTracker();
 const { nodes, stats, streak } = useSessionTree();
 
 // ── SVG dimensions ──
@@ -93,11 +98,16 @@ onMounted(() => {
   ambientTimer = setInterval(() => {
     ambientIndex.value++;
   }, 8000);
+  // Layer 2: 开始危机 session 追踪
+  crisisTracker.startCrisisSession(moodTheme.currentMood);
+  crisisTracker.recordToolUse('sanctuary');
 });
 
 onUnmounted(() => {
   if (ambientTimer) clearInterval(ambientTimer);
   if (tapTimeout) clearTimeout(tapTimeout);
+  // Layer 2: 结束危机 session，创建 CrisisMarker
+  crisisTracker.endCrisisSession();
 });
 
 // ── Current mood metadata ──
@@ -178,6 +188,26 @@ const floatingLeaves = computed(() => {
 
 // ── Bottom interaction hints (max 2, extremely subtle) ──
 const showHints = ref(true);
+
+/** Layer 1 工具展开状态 */
+const showBreathing = ref(false);
+const showSoundscape = ref(false);
+
+function onWantBreathingMinimal() {
+  showBreathing.value = !showBreathing.value;
+  if (showBreathing.value) {
+    showSoundscape.value = false;
+    crisisTracker.recordToolUse('breathing-minimal');
+  }
+}
+
+function onWantSoundscape() {
+  showSoundscape.value = !showSoundscape.value;
+  if (showSoundscape.value) {
+    showBreathing.value = false;
+    crisisTracker.recordToolUse('soundscape');
+  }
+}
 </script>
 
 <template>
@@ -321,6 +351,14 @@ const showHints = ref(true);
       />
     </svg>
 
+    <!-- Breathing orb — passive "breathe with me" -->
+    <div class="breathing-orb-container">
+      <div class="breathing-orb" :style="{ background: `radial-gradient(circle, ${moodTheme.palette.accent}40, transparent 70%)` }">
+        <div class="breathing-orb-core" :style="{ background: moodTheme.palette.accent }" />
+      </div>
+      <p class="breathing-orb-label">{{ t('sanctuary.breatheWithMe') }}</p>
+    </div>
+
     <!-- Mood metaphor — small label below tree -->
     <p class="mood-metaphor">
       <span class="mood-emoji">{{ moodMeta.emoji }}</span>
@@ -332,13 +370,34 @@ const showHints = ref(true);
       🔥 {{ t('sanctuary.streakLabel', { days: streak.days }) }}
     </p>
 
+    <!-- Layer 1 tools: inline breathing / soundscape -->
+    <transition name="layer1-expand">
+      <div v-if="showBreathing" class="layer1-tool-area" @click.stop>
+        <BreathingMinimal />
+      </div>
+    </transition>
+
+    <transition name="layer1-expand">
+      <div v-if="showSoundscape" class="layer1-tool-area" @click.stop>
+        <SoundScape />
+      </div>
+    </transition>
+
     <!-- Bottom subtle hints (dismissible) -->
     <div v-if="showHints" class="sanctuary-hints">
-      <button class="hint-pill" @click.stop="emit('want-breathe')">
+      <button class="hint-pill" @click.stop="onWantBreathingMinimal"
+        :class="{ active: showBreathing }">
         🍃 <span>{{ t('sanctuary.hintBreathe') }}</span>
+      </button>
+      <button class="hint-pill" @click.stop="onWantSoundscape"
+        :class="{ active: showSoundscape }">
+        🎵 <span>{{ t('sanctuary.hintSound') }}</span>
       </button>
       <button class="hint-pill" @click.stop="emit('want-chat')">
         💭 <span>{{ t('sanctuary.hintChat') }}</span>
+      </button>
+      <button class="hint-pill hint-pill-exit" @click.stop="emit('update-mood')">
+        🌤️ <span>{{ t('sanctuary.hintUpdateMood') }}</span>
       </button>
     </div>
   </div>
@@ -417,7 +476,103 @@ const showHints = ref(true);
   transition: opacity 0.3s;
 }
 .hint-pill:hover { opacity: 0.8; }
+.hint-pill.active {
+  opacity: 0.8;
+  border-color: var(--mood-accent);
+  background: var(--mood-hover-bg);
+}
 .hint-pill span { opacity: 0.7; }
+.hint-pill-exit {
+  opacity: 0.35;
+  margin-left: 0.5rem;
+  border-style: dashed;
+}
+.hint-pill-exit:hover { opacity: 0.7; }
+
+/* ── Layer 1 tool area ── */
+.layer1-tool-area {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 1rem;
+}
+.layer1-expand-enter-active {
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+.layer1-expand-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+.layer1-expand-enter-from {
+  opacity: 0;
+  transform: scale(0.85) translateY(10px);
+}
+.layer1-expand-leave-to {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+/* ── Breathing orb ── */
+.breathing-orb-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 1rem 0 0.5rem;
+}
+
+.breathing-orb {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: breathing-expand 8s ease-in-out infinite;
+}
+
+.breathing-orb-core {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  opacity: 0.5;
+  animation: breathing-core 8s ease-in-out infinite;
+}
+
+.breathing-orb-label {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  opacity: 0.4;
+  letter-spacing: 0.08em;
+  animation: breathing-text 8s ease-in-out infinite;
+}
+
+@keyframes breathing-expand {
+  0%, 100% {
+    transform: scale(0.7);
+    opacity: 0.3;
+  }
+  /* inhale: 0→4s */
+  50% {
+    transform: scale(1.15);
+    opacity: 0.6;
+  }
+  /* exhale: 4→8s */
+}
+
+@keyframes breathing-core {
+  0%, 100% {
+    transform: scale(0.8);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 0.7;
+  }
+}
+
+@keyframes breathing-text {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 0.5; }
+}
 
 /* ── SVG animations ── */
 .s-firefly {
@@ -466,6 +621,7 @@ const showHints = ref(true);
 
 @media (prefers-reduced-motion: reduce) {
   .s-firefly, .s-mist, .s-leaf, .s-sunray { animation: none !important; }
+  .breathing-orb, .breathing-orb-core, .breathing-orb-label { animation: none !important; }
   .ambient-fade-enter-active, .ambient-fade-leave-active { transition: none !important; }
 }
 </style>

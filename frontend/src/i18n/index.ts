@@ -43,6 +43,8 @@ function resolve(obj: any, path: string): any {
 export function setLocale(loc: Locale) {
   currentLocale.value = loc;
   try { localStorage.setItem(STORAGE_KEY, loc); } catch {}
+  // Update html lang attribute for accessibility
+  try { document.documentElement.lang = loc; } catch {}
 }
 
 export function useI18n() {

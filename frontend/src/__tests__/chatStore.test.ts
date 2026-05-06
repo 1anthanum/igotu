@@ -65,13 +65,19 @@ describe('chatStore', () => {
       expect(store.messages).toEqual([]);
     });
 
-    it('returns null on API error without crashing', async () => {
+    it('falls back to demo session on API error', async () => {
       vi.mocked(chatApi.createSession).mockRejectedValue(new Error('Network'));
 
       const store = useChatStore();
+      // Trigger demo mode by failing fetchSessions first
+      vi.mocked(chatApi.getSessions).mockRejectedValue(new Error('Network'));
+      await store.fetchSessions();
+
       const result = await store.startNewSession();
 
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result!.id).toMatch(/^demo-/);
+      expect(store.isDemoMode).toBe(true);
     });
   });
 

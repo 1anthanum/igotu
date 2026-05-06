@@ -7,7 +7,7 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor: attach JWT token
+// Request interceptor: attach JWT token (skip in demo mode)
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token');
   if (token) {
@@ -24,6 +24,12 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
+      // Demo mode (no token at all): silently reject without redirect or refresh
+      const hadToken = error.config?.headers?.Authorization;
+      if (!hadToken) {
+        return Promise.reject(error);
+      }
+
       // Skip redirect for background/optional API calls
       const optionalPaths = ['/exercises', '/phq9', '/cognitive'];
       const requestPath = error.config?.url || '';

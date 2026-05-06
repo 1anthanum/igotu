@@ -9,6 +9,7 @@ export const en = {
     backToHome: '← Home',
     next: 'Next →',
     prev: '← Previous',
+    previous: '← Previous',
     done: 'Done',
     restart: 'Try Again',
     skip: 'Skip',
@@ -214,6 +215,9 @@ export const en = {
     inputPlaceholderLow: 'Write if you want, or don\'t…',
     skipText: 'Skip writing, next →',
     noTextHint: 'Don\'t want to type? Thinking it in your mind works just as well',
+    stepDisplay: '{sense}',
+    nextStep: 'Next →',
+    summaryItem: '{n} things you can {sense}',
     senseItems: '{n} things you can {sense}',
     doneTitle: 'You\'re Back',
     doneMsg: 'You just used your five senses to bring yourself back to the present. You are here. You are safe.',
@@ -548,6 +552,12 @@ export const en = {
     title: 'Quick emotion check',
     hint: 'Tap to record how you feel right now',
     recorded: 'Recorded ✓',
+    feedbackRising: 'Getting better, keep going ↑',
+    feedbackFalling: 'Tough stretch. Try a deep breath?',
+    feedbackBigJump: 'Big improvement! The sky is clearing for you',
+    feedbackDrop: 'I\'m here with you. Take your time.',
+    feedbackAnxious: 'Feeling anxious? Try slow breathing 🍃',
+    feedbackSerene: 'So peaceful right now ✦',
   },
 
   // ── Emotion Scatter ──
@@ -646,8 +656,11 @@ export const en = {
   // ── Sanctuary ──
   sanctuary: {
     streakLabel: '🔥 {days} day streak',
+    breatheWithMe: 'Breathe with me',
     hintBreathe: 'Breathe',
+    hintSound: 'Sound',
     hintChat: 'Chat',
+    hintUpdateMood: 'Feeling better',
     affectWords: {
       1: ['Heavy', 'Dark tide', 'Foggy', 'Exhausted', 'Silent', 'Abyss'],
       2: ['Dim', 'Hesitant', 'Hazy', 'Overcast', 'Low', 'Wandering'],
@@ -661,6 +674,49 @@ export const en = {
       3: ['Stillness is strength.', 'This moment, peace.', 'Breathe.'],
       4: ['You\'re growing.', 'New leaves are unfurling.', 'Feel the light.'],
       5: ['Sunlight through the canopy.', 'A good day.', 'You deserve this.'],
+    },
+  },
+
+  // ── Next-Day Check-In (Layer 2) ──
+  nextDayCheckIn: {
+    promptNormal: 'Hey, yesterday was a bit rough. How are you feeling today?',
+    promptSensitive: 'Glad you\'re here. Want to tell me how today is going?',
+    stillHard: 'Still hard',
+    betterNow: 'Better now',
+    imOkay: 'I\'m okay',
+    responseLow: 'I\'m here with you. You don\'t have to do anything.',
+    responseGood: 'Glad to hear you\'re doing better 💛',
+  },
+
+  // ── Development Report (Layer 3) ──
+  report: {
+    title: 'Development Report',
+    subtitle: 'Understand your recent mood trends and tool usage',
+    days: 'days',
+    moodTrend: '📈 Mood Trend',
+    average: 'Average',
+    change: 'Change',
+    volatilityLabel: 'Volatility',
+    volatility: {
+      low: 'Stable',
+      medium: 'Moderate',
+      high: 'High',
+    },
+    toolUsage: 'Tool Usage',
+    crisisMoments: 'Difficult Moments',
+    minutes: 'minutes',
+    crisisSummary: '{count} out of {days} days had difficult moments',
+    noMoodData: 'No mood data yet',
+    noToolData: 'No tool usage records yet',
+    footerNote: 'This report is auto-generated from local data, for personal reference only. Not medical advice.',
+    moodCurve: {
+      legendMood: 'Mood',
+      legendCrisis: 'Difficult moments',
+      legendDailyMin: 'Daily low',
+      exportBtn: 'Export PNG',
+      exporting: 'Exporting...',
+      exportTitle: 'Mood Trend Curve',
+      exportWatermark: 'Mood Trend · For reference only',
     },
   },
 

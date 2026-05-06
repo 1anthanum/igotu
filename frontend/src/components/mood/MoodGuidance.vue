@@ -35,13 +35,13 @@ const cards = computed<GuidanceCard[]>(() => {
   if (mood <= 3) {
     return [
       { emoji: '💭', title: t('guidance.cards.chatToday.title'), desc: t('guidance.cards.chatToday.desc'), route: '/chat', taskLabel: t('guidance.taskLabels.chat') },
-      { emoji: '🌿', title: t('guidance.cards.recordFeelings.title'), desc: t('guidance.cards.recordFeelings.desc'), route: '/mood', taskLabel: t('guidance.taskLabels.recordMood') },
+      { emoji: '🌿', title: t('guidance.cards.recordFeeling.title'), desc: t('guidance.cards.recordFeeling.desc'), route: '/mood', taskLabel: t('guidance.taskLabels.mood') },
     ];
   }
   // mood 4-5
   return [
-    { emoji: '📝', title: t('guidance.cards.organize.title'), desc: t('guidance.cards.organize.desc'), route: '/chat', taskLabel: t('guidance.taskLabels.summarizePlan') },
-    { emoji: '🌉', title: t('guidance.cards.therapyNote.title'), desc: t('guidance.cards.therapyNote.desc'), route: '/therapy', taskLabel: t('guidance.taskLabels.updateTherapyNote') },
+    { emoji: '📝', title: t('guidance.cards.organize.title'), desc: t('guidance.cards.organize.desc'), route: '/chat', taskLabel: t('guidance.taskLabels.summary') },
+    { emoji: '🌉', title: t('guidance.cards.therapyNotes.title'), desc: t('guidance.cards.therapyNotes.desc'), route: '/therapy', taskLabel: t('guidance.taskLabels.therapy') },
   ];
 });
 

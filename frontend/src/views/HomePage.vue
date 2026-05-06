@@ -16,6 +16,8 @@ import { useAnalyticsStore } from '@/stores/analytics';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useMoodCheckIn } from '@/composables/useMoodCheckIn';
 import { useMoodInsights } from '@/composables/useMoodInsights';
+import { useCrisisTracker } from '@/composables/useCrisisTracker';
+import NextDayCheckIn from '@/components/mood/NextDayCheckIn.vue';
 import EncouragementCard from '@/components/encouragement/EncouragementCard.vue';
 import AchievementCard from '@/components/achievements/AchievementCard.vue';
 import HeatmapCalendar from '@/components/visualization/HeatmapCalendar.vue';
@@ -35,6 +37,7 @@ const analytics = useAnalyticsStore();
 const moodTheme = useMoodThemeStore();
 const moodCheckIn = useMoodCheckIn();
 const moodInsights = useMoodInsights();
+const crisisTracker = useCrisisTracker();
 
 function onGuidanceTaskDone(label: string) {
   const newScore = moodCheckIn.boostMood(moodTheme.currentMood, label);
@@ -100,10 +103,20 @@ function onSanctuaryChat() {
 function onSanctuaryBreathe() {
   router.push('/toolbox/breathing');
 }
+function onSanctuaryUpdateMood() {
+  // Gently bump mood to 3 to exit Sanctuary → normal mode
+  moodTheme.setMoodSmooth(3);
+}
 </script>
 
 <template>
   <div class="pt-6">
+    <!-- Layer 2: 次日关怀签到（有待跟进标记时显示） -->
+    <NextDayCheckIn
+      @done="(mood) => moodTheme.setMoodSmooth(mood)"
+      @dismiss="() => {}"
+    />
+
     <!--
       ═══════════════════════════════════════════
       SANCTUARY MODE (mood ≤ 2)
@@ -114,6 +127,7 @@ function onSanctuaryBreathe() {
       <SanctuaryView
         @want-chat="onSanctuaryChat"
         @want-breathe="onSanctuaryBreathe"
+        @update-mood="onSanctuaryUpdateMood"
       />
     </template>
 

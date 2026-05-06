@@ -173,7 +173,7 @@ async function sendMessage(text?: string) {
   }
 
   input.value = '';
-  const response = await chatStore.sendMessage(content);
+  const response = await chatStore.sendMessage(content, moodTheme.currentMood);
 
   if (response && typeof response === 'object' && 'mood_score' in response) {
     moodTheme.setMoodSmooth((response as any).mood_score);

@@ -22,6 +22,10 @@ interface Particle {
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 const isMobile = window.innerWidth < 768;
 
+// Cache RGB values to avoid per-frame hex parsing
+let cachedRgb: [number, number, number] = [100, 220, 180];
+let cachedAccent = '';
+
 function getParticleCount(): number {
   if (prefersReducedMotion) return 0;
   if (moodTheme.isLowEnergy) return isMobile ? 6 : 10;
@@ -69,7 +73,14 @@ function animate() {
   const w = c.width;
   const h = c.height;
   const speedMultiplier = moodTheme.isLowEnergy ? 0.5 : 1;
-  const [r, g, b] = hexToRgb(moodTheme.palette.accent);
+
+  // Cache RGB conversion — only reparse when accent changes
+  const accent = moodTheme.palette.accent;
+  if (accent !== cachedAccent) {
+    cachedAccent = accent;
+    cachedRgb = hexToRgb(accent);
+  }
+  const [r, g, b] = cachedRgb;
 
   ctx.clearRect(0, 0, w, h);
 
@@ -92,22 +103,25 @@ function animate() {
       Object.assign(p, createParticle(w, h));
     }
 
-    // Draw glow
-    const gradient = ctx.createRadialGradient(drawX, p.y, 0, drawX, p.y, p.size * 4);
-    gradient.addColorStop(0, `rgba(${r},${g},${b},${p.opacity})`);
-    gradient.addColorStop(1, `rgba(${r},${g},${b},0)`);
-    ctx.fillStyle = gradient;
+    // Skip nearly-invisible particles (avoid expensive draw calls)
+    if (p.opacity < 0.01) continue;
+
+    // Draw glow — use simpler circle + globalAlpha instead of per-particle gradient
+    const radius = p.size * 4;
+    ctx.globalAlpha = p.opacity * 0.6;
+    ctx.fillStyle = `rgb(${r},${g},${b})`;
     ctx.beginPath();
-    ctx.arc(drawX, p.y, p.size * 4, 0, Math.PI * 2);
+    ctx.arc(drawX, p.y, radius, 0, Math.PI * 2);
     ctx.fill();
 
-    // Draw core
-    ctx.fillStyle = `rgba(${r},${g},${b},${p.opacity * 1.5})`;
+    // Draw core (brighter center dot)
+    ctx.globalAlpha = p.opacity * 1.5;
     ctx.beginPath();
     ctx.arc(drawX, p.y, p.size, 0, Math.PI * 2);
     ctx.fill();
   }
 
+  ctx.globalAlpha = 1; // Reset
   animationId = requestAnimationFrame(animate);
 }
 

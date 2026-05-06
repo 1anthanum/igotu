@@ -138,24 +138,60 @@ function onDiscTouchEnd() {
   isDragging.value = false;
 }
 
+// ── Contextual feedback logic ──
+function getContextualFeedback(score: number, emotion: EmotionPoint): string {
+  const history = checkIn.sessionMoodHistory.value;
+  const pulses = history.filter(s => s.trigger === 'pulse');
+
+  // Check consecutive trend (last 3 pulses)
+  if (pulses.length >= 3) {
+    const recent = pulses.slice(-3).map(p => p.score);
+    const allRising = recent[0] < recent[1] && recent[1] < score;
+    const allFalling = recent[0] > recent[1] && recent[1] > score;
+
+    if (allRising) return t('pulse.feedbackRising');
+    if (allFalling) return t('pulse.feedbackFalling');
+  }
+
+  // Check if mood improved from last pulse
+  if (pulses.length >= 1) {
+    const lastScore = pulses[pulses.length - 1].score;
+    if (score - lastScore >= 2) return t('pulse.feedbackBigJump');
+    if (lastScore - score >= 2) return t('pulse.feedbackDrop');
+  }
+
+  // High arousal + negative valence = anxiety detected
+  if (emotion.arousal > 0.5 && emotion.valence < -0.3) {
+    return t('pulse.feedbackAnxious');
+  }
+
+  // Very calm and positive
+  if (emotion.arousal < -0.3 && emotion.valence > 0.3) {
+    return t('pulse.feedbackSerene');
+  }
+
+  // Default
+  return t('pulse.recorded');
+}
+
 // ── Record pulse ──
 function recordAndClose(emotion: EmotionPoint) {
   const score = checkIn.recordPulse(emotion);
   moodTheme.setMoodSmooth(score);
 
-  // Feedback
+  // Contextual feedback
   const { h, s, l } = emotionToColor(emotion);
   feedbackColor.value = `hsl(${h},${s}%,${l}%)`;
-  feedbackText.value = t('pulse.recorded');
+  feedbackText.value = getContextualFeedback(score, emotion);
   hasRecorded.value = true;
   rippleKey.value++;
 
-  // Auto-close after feedback
+  // Auto-close after feedback (slightly longer for contextual messages)
   if (closeTimer) clearTimeout(closeTimer);
   closeTimer = setTimeout(() => {
     close();
     hasRecorded.value = false;
-  }, 1200);
+  }, 1600);
 }
 
 // ── Dot position in disc ──
@@ -168,16 +204,19 @@ const dotTop = computed(() => {
   return `${(-previewPoint.value.arousal + 1) / 2 * 100}%`;
 });
 
-// ── Global mouse listeners ──
+// ── Global mouse listeners (only active when dragging) ──
 function onGlobalMouseMove(e: MouseEvent) {
+  if (!isDragging.value) return; // Critical: skip if not dragging
   onDiscPointerMove(e);
 }
 function onGlobalMouseUp() {
+  if (!isDragging.value) return;
   onDiscPointerUp();
 }
 
 onMounted(() => {
-  window.addEventListener('mousemove', onGlobalMouseMove);
+  // Use passive listener for mousemove to avoid blocking scroll
+  window.addEventListener('mousemove', onGlobalMouseMove, { passive: true });
   window.addEventListener('mouseup', onGlobalMouseUp);
 });
 
@@ -282,6 +321,12 @@ onUnmounted(() => {
   flex-direction: column;
   align-items: flex-end;
   gap: 0.5rem;
+}
+@media (max-width: 480px) {
+  .pulse-wrapper {
+    right: 0.75rem;
+    bottom: 5rem;
+  }
 }
 
 /* ── FAB ── */
@@ -481,6 +526,20 @@ onUnmounted(() => {
 
 .ripple-burst-enter-active { animation: pulse-ripple-expand 1s forwards; }
 .ripple-burst-leave-active { display: none; }
+
+@media (max-width: 480px) {
+  .pulse-disc {
+    width: 110px;
+    height: 110px;
+  }
+  .disc-hint {
+    max-width: 110px;
+  }
+  .pulse-fab {
+    width: 42px;
+    height: 42px;
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .pulse-fab { transition: none !important; }

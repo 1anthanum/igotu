@@ -7,6 +7,7 @@ import { useMoodCheckIn } from '@/composables/useMoodCheckIn';
 import AppHeader from '@/components/layout/AppHeader.vue';
 import AmbientParticles from '@/components/effects/AmbientParticles.vue';
 import GradientMesh from '@/components/effects/GradientMesh.vue';
+import DynamicSkyBg from '@/components/atmosphere/DynamicSkyBg.vue';
 import WelcomeModal from '@/components/onboarding/WelcomeModal.vue';
 import MoodCheckIn from '@/components/mood/MoodCheckIn.vue';
 import MoodThresholdPanel from '@/components/mood/MoodThresholdPanel.vue';
@@ -53,6 +54,7 @@ function onCheckInDone(score: number) {
   <AccessGate>
     <div class="min-h-screen" style="background-color: var(--bg-primary); color: var(--text-primary);">
       <!-- 背景视觉层 -->
+      <DynamicSkyBg />
       <AmbientParticles />
       <GradientMesh />
 

@@ -28,6 +28,8 @@ let rippleId = 0;
 
 function onDocClick(e: MouseEvent) {
   if (prefersReducedMotion || moodTheme.isLowEnergy) return;
+  // Limit concurrent ripples to prevent accumulation
+  if (ripples.value.length >= 3) return;
   const id = ++rippleId;
   ripples.value.push({ id, x: e.clientX, y: e.clientY, color: moodTheme.palette.accent });
   setTimeout(() => {

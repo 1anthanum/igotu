@@ -10,7 +10,7 @@ import { ref, computed } from 'vue';
 
 export interface ExerciseRecord {
   id: string;
-  type: 'breathing' | 'grounding';
+  type: 'breathing' | 'grounding' | 'soundscape' | 'breathing-minimal' | 'sanctuary';
   technique: string;
   /** 完成时间 ISO string */
   completedAt: string;
@@ -67,6 +67,16 @@ export function useExerciseTracker() {
     records.value.filter(r => r.type === 'grounding').length
   );
 
+  /** 声景使用次数 */
+  const soundscapeCount = computed(() =>
+    records.value.filter(r => r.type === 'soundscape').length
+  );
+
+  /** Layer 1 工具总使用次数（含简化呼吸、声景、Sanctuary） */
+  const crisisToolCount = computed(() =>
+    records.value.filter(r => ['soundscape', 'breathing-minimal', 'sanctuary'].includes(r.type)).length
+  );
+
   /** 总练习次数 */
   const totalCount = computed(() => records.value.length);
 
@@ -97,6 +107,8 @@ export function useExerciseTracker() {
     logCompletion,
     breathingCount,
     groundingCount,
+    soundscapeCount,
+    crisisToolCount,
     totalCount,
     todayCount,
     recordsByDate,
