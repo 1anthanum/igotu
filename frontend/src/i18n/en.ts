@@ -734,6 +734,9 @@ export const en = {
     language: 'Language',
     langZh: '中文',
     langEn: 'English',
+    vemTitle: 'Energy Sync (VEM)',
+    vemToggle: 'Enable cross-app energy analysis',
+    vemPrivacy: 'When enabled, statistical data like mood scores and tool usage counts are synced to VEM for holistic analysis. Chat content, thought text, and other private information never leave IGOTU.',
   },
 
   // ── Analytics ──
@@ -871,6 +874,18 @@ export const en = {
     more: 'More',
     categoryBreakdown: 'Category Breakdown',
     times: 'times',
+  },
+
+  // ── VEM (Visualization Energy Map) ──
+  vem: {
+    vitality: 'Vitality',
+    stress: 'Stress',
+    clarity: 'Clarity',
+    momentum: 'Momentum',
+    recovery: 'Recovery',
+    defaultInsight: 'Today\'s energy overview',
+    defaultQuestion: 'Did yesterday\'s suggestions help?',
+    thanksFeedback: 'Thanks for your feedback ✦',
   },
 
   // ── Analytics (extended) ──

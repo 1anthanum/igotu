@@ -5,12 +5,20 @@ import { useAuthStore } from '@/stores/auth';
 import { useMoodThemeStore } from '@/composables/useMoodTheme';
 import { useI18n } from '@/i18n';
 
+const VEM_ENABLED_KEY = 'igotu_vem_enabled';
+
 const auth = useAuthStore();
 const moodTheme = useMoodThemeStore();
 const { t, locale, setLocale } = useI18n();
 const username = ref('');
 const loading = ref(false);
 const message = ref('');
+const vemEnabled = ref(localStorage.getItem(VEM_ENABLED_KEY) !== 'false');
+
+function toggleVEM() {
+  vemEnabled.value = !vemEnabled.value;
+  localStorage.setItem(VEM_ENABLED_KEY, String(vemEnabled.value));
+}
 
 onMounted(async () => {
   try {
@@ -95,6 +103,27 @@ async function exportData() {
       </div>
     </div>
 
+    <!-- VEM Energy Sync -->
+    <div class="card animate-float-in" style="animation-delay: 0.2s;">
+      <h2 class="text-sm font-semibold mb-3" style="color: var(--text-primary);">{{ t('settings.vemTitle') }}</h2>
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-sm" style="color: var(--text-secondary);">{{ t('settings.vemToggle') }}</span>
+        <button
+          @click="toggleVEM"
+          class="vem-toggle"
+          :class="{ active: vemEnabled }"
+          :style="vemEnabled ? { background: moodTheme.palette.accent } : {}"
+          role="switch"
+          :aria-checked="vemEnabled"
+        >
+          <span class="vem-toggle-knob" />
+        </button>
+      </div>
+      <p class="text-xs leading-relaxed" style="color: var(--text-muted);">
+        {{ t('settings.vemPrivacy') }}
+      </p>
+    </div>
+
     <!-- Data & Privacy -->
     <div class="card animate-float-in" style="animation-delay: 0.25s;">
       <h2 class="text-sm font-semibold mb-4" style="color: var(--text-primary);">{{ t('settings.dataPrivacy') }}</h2>
@@ -118,3 +147,31 @@ async function exportData() {
     </div>
   </div>
 </template>
+
+<style scoped>
+.vem-toggle {
+  position: relative;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--bg-secondary, rgba(255,255,255,0.1));
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.vem-toggle-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+
+.vem-toggle.active .vem-toggle-knob {
+  transform: translateX(20px);
+}
+</style>

@@ -29,6 +29,8 @@ import EmotionPulse from '@/components/mood/EmotionPulse.vue';
 import InsightCards from '@/components/mood/InsightCards.vue';
 import WeeklyDigest from '@/components/mood/WeeklyDigest.vue';
 import DayTimeline from '@/components/visualization/DayTimeline.vue';
+import VEMBanner from '@/components/vem/VEMBanner.vue';
+import FeedbackChips from '@/components/vem/FeedbackChips.vue';
 
 const router = useRouter();
 const { t } = useI18n();
@@ -117,6 +119,9 @@ function onSanctuaryUpdateMood() {
       @dismiss="() => {}"
     />
 
+    <!-- VEM 今日能量横幅（两种模式下都显示，VEM 不可用时自动隐藏） -->
+    <VEMBanner />
+
     <!--
       ═══════════════════════════════════════════
       SANCTUARY MODE (mood ≤ 2)
@@ -169,6 +174,9 @@ function onSanctuaryUpdateMood() {
             <span class="text-caption">{{ tool.label }}</span>
           </router-link>
         </div>
+
+        <!-- VEM micro-feedback chips -->
+        <FeedbackChips />
 
         <!-- Emotion insights -->
         <InsightCards />

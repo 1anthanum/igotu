@@ -735,6 +735,9 @@ export const zh = {
     language: '语言',
     langZh: '中文',
     langEn: 'English',
+    vemTitle: '能量同步 (VEM)',
+    vemToggle: '启用跨应用能量分析',
+    vemPrivacy: '开启后，情绪评分、工具使用次数等统计数据会同步到 VEM 进行综合分析。聊天内容、想法文本等隐私信息永远不会离开 IGOTU。',
   },
 
   // ── Analytics ──
@@ -872,6 +875,18 @@ export const zh = {
     more: '多',
     categoryBreakdown: '分类统计',
     times: '次',
+  },
+
+  // ── VEM (Visualization Energy Map) ──
+  vem: {
+    vitality: '活力',
+    stress: '压力',
+    clarity: '清晰',
+    momentum: '势能',
+    recovery: '恢复',
+    defaultInsight: '今日能量总览',
+    defaultQuestion: '昨天的建议对你有帮助吗？',
+    thanksFeedback: '谢谢你的反馈 ✦',
   },
 
   // ── Analytics (extended) ──
