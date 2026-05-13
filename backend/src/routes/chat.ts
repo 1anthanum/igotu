@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { authenticate } from '../middleware/auth';
 import { chatLimiter } from '../middleware/rateLimit';
 import { ChatService } from '../services/ChatService';
+import { emitChatUserMsg } from '../services/VEMBridge';
 
 const router = Router();
 
@@ -55,6 +56,15 @@ router.post('/sessions/:id/messages', authenticate, chatLimiter, async (req: Req
       response.mood_score = result.mood_score;
     }
     res.json(response);
+
+    // VEM: fire-and-forget chat event (length + sentiment only, no content — privacy)
+    const sentimentHint: -1 | 0 | 1 = result.mood_score !== null
+      ? (result.mood_score <= 2 ? -1 : result.mood_score >= 4 ? 1 : 0)
+      : 0;
+    emitChatUserMsg(req.user!.sub, {
+      length: content.length,
+      sentiment_hint: sentimentHint,
+    });
   } catch (err: any) {
     if (err.message === 'Session not found') {
       return res.status(404).json({ error: 'Session not found' });

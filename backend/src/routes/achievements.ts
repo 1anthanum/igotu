@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { achievementService } from '../services/AchievementService';
 import { authenticate } from '../middleware/auth';
 import { validate } from '../middleware/validation';
+import { emitAchievementLogged } from '../services/VEMBridge';
 
 const router = Router();
 router.use(authenticate);
@@ -24,6 +25,13 @@ router.post('/', validate(logSchema), async (req: Request, res: Response, next: 
       ...req.body,
     });
     res.status(201).json(achievement);
+
+    // VEM: fire-and-forget achievement event
+    emitAchievementLogged(req.user!.sub, {
+      category: req.body.category || 'custom',
+      emoji: req.body.emoji || null,
+      from_template: !!req.body.templateId,
+    });
   } catch (err) {
     next(err);
   }

@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/auth';
 import { query } from '../config/database';
+import { emitExerciseCompleted } from '../services/VEMBridge';
 
 const router = Router();
 
@@ -24,6 +25,14 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
 
     const result = query('SELECT * FROM exercise_logs WHERE id = ?', [id]);
     res.status(201).json(result.rows[0]);
+
+    // VEM: fire-and-forget exercise event
+    const parsedData = data || {};
+    emitExerciseCompleted(userId, {
+      type,
+      technique: technique || null,
+      duration_s: parsedData.duration_s ?? parsedData.durationSeconds,
+    });
   } catch (err) {
     next(err);
   }

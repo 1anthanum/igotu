@@ -33,6 +33,10 @@ export const env = {
 
   // Frontend access password gate (Express middleware checks cookie + this value)
   ACCESS_PASSWORD: process.env.ACCESS_PASSWORD || '',
+
+  // VEM (Visualization Energy Map) integration
+  VEM_BASE_URL: process.env.VEM_BASE_URL || '',
+  VEM_HMAC_KEY: process.env.VEM_HMAC_KEY || '',
 };
 
 // Validate critical env vars in production

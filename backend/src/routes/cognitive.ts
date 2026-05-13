@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/auth';
 import { query } from '../config/database';
+import { emitCBTCompleted } from '../services/VEMBridge';
 
 const router = Router();
 
@@ -45,6 +46,14 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
 
     const result = query('SELECT * FROM cognitive_records WHERE id = ?', [id]);
     res.status(201).json(result.rows[0]);
+
+    // VEM: fire-and-forget CBT event (no thought/evidence text — privacy)
+    emitCBTCompleted(userId, {
+      intensity_before: intensity_before ?? null,
+      intensity_after: intensity_after ?? null,
+      distortions: distortions || [],
+      emotions: emotions || [],
+    });
   } catch (err) {
     next(err);
   }

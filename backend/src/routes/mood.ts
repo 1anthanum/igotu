@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/auth';
 import { query } from '../config/database';
+import { emitMoodLogged } from '../services/VEMBridge';
 
 const router = Router();
 
@@ -24,6 +25,14 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
 
     const result = query('SELECT * FROM mood_entries WHERE id = ?', [id]);
     res.status(201).json(result.rows[0]);
+
+    // VEM: fire-and-forget mood event
+    emitMoodLogged(userId, {
+      mood_score,
+      mood_emoji,
+      mood_label,
+      has_note: !!note,
+    });
   } catch (err) {
     next(err);
   }

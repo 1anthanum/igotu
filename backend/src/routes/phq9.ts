@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { authenticate } from '../middleware/auth';
 import { query } from '../config/database';
+import { emitPHQ9Scored } from '../services/VEMBridge';
 
 const router = Router();
 
@@ -42,6 +43,12 @@ router.post('/', authenticate, async (req: Request, res: Response, next: NextFun
 
     const result = query('SELECT * FROM phq9_results WHERE id = ?', [id]);
     res.status(201).json(result.rows[0]);
+
+    // VEM: fire-and-forget PHQ-9 event (score only, no individual answers)
+    emitPHQ9Scored(userId, {
+      score,
+      functional_impact: functional_impact ?? null,
+    });
   } catch (err) {
     next(err);
   }

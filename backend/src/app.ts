@@ -17,6 +17,7 @@ import phq9Routes from './routes/phq9';
 import exerciseRoutes from './routes/exercises';
 import cognitiveRoutes from './routes/cognitive';
 import moodRoutes from './routes/mood';
+import vemRoutes from './routes/vem';
 
 const app = express();
 
@@ -56,6 +57,9 @@ app.use('/api/phq9', phq9Routes);
 app.use('/api/exercises', exerciseRoutes);
 app.use('/api/cognitive', cognitiveRoutes);
 app.use('/api/mood', moodRoutes);
+
+// VEM integration (energy map sync, micro-feedback, health ingest)
+app.use('/api/vem', vemRoutes);
 
 // Error handling (for API routes)
 app.use('/api', errorHandler);
